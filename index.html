@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finanças — Contas a Pagar e Receber</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#F6F5F1; --panel:#FFFFFF; --ink:#1C2430; --ink-soft:#5B6470; --ink-faint:#9AA2AC;
+    --border:#E4E2DC; --primary:#1B3A4B; --primary-dark:#12262F; --accent:#C99A3E;
+    --ok:#2F7D5A; --danger:#B5482F; --warn:#C98A2E;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink);}
+  .shell{display:flex; min-height:100vh;}
+  .sidebar{width:230px; background:var(--primary-dark); color:#EDEAE2; flex-shrink:0; padding:22px 0; display:flex; flex-direction:column;}
+  .sidebar .brand{padding:0 20px 22px; font-size:17px; font-weight:700; display:flex; align-items:center; gap:8px; border-bottom:1px solid rgba(255,255,255,.1); margin-bottom:12px;}
+  .sidebar .brand span.dot{width:9px; height:9px; border-radius:50%; background:var(--accent); display:inline-block;}
+  .nav-item{padding:11px 20px; cursor:pointer; font-size:14px; color:#C9C5B8; transition:.15s;}
+  .nav-item:hover{background:rgba(255,255,255,.06); color:#fff;}
+  .nav-item.active{background:var(--accent); color:#1C1400; font-weight:600;}
+  .main{flex:1; padding:26px 32px; max-width:1180px;}
+  .topbar{display:flex; justify-content:flex-end; align-items:center; gap:10px; margin-bottom:18px;}
+  .whoami-avatar{width:34px; height:34px; border-radius:50%; object-fit:cover;}
+  .whoami-avatar-fallback{display:flex; align-items:center; justify-content:center; background:var(--primary); color:#fff; font-weight:700; font-size:14px;}
+  .topbar-user{display:flex; align-items:center; gap:10px; background:#fff; border:1px solid var(--border); border-radius:30px; padding:6px 8px 6px 6px;}
+  .whoami{font-size:12.5px; color:var(--ink-soft); line-height:1.3;}
+  .whoami b{display:block; color:var(--ink); font-size:13.5px;}
+  .logout-btn{border:1px solid var(--border); background:#fff; border-radius:20px; padding:7px 14px; font-size:13px; cursor:pointer; color:var(--ink-soft);}
+  .logout-btn:hover{border-color:var(--ink-faint); color:var(--ink);}
+  .page-header{margin-bottom:18px;}
+  .eyebrow{font-size:12px; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:.04em;}
+  h2{margin:2px 0 0; font-size:24px;}
+  h3{margin:0 0 10px; font-size:16px;}
+  .panel{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:20px; margin-bottom:18px;}
+  .hint{font-size:13px; color:var(--ink-soft); margin:0 0 12px;}
+  .stat-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:14px; margin-bottom:22px;}
+  .stat-card{background:var(--panel); border:1px solid var(--border); border-left:4px solid var(--primary); border-radius:12px; padding:16px 18px;}
+  .stat-card.ok{border-left-color:var(--ok);}
+  .stat-card.danger{border-left-color:var(--danger);}
+  .stat-card.warn{border-left-color:var(--warn);}
+  .stat-card .num{font-size:22px; font-weight:700;}
+  .stat-card .label{font-size:12.5px; color:var(--ink-soft); margin-top:3px;}
+  .form-row{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px; align-items:flex-end;}
+  .form-row > div{display:flex; flex-direction:column; gap:4px;}
+  .field-label{font-size:12px; color:var(--ink-soft); font-weight:600;}
+  input, select{padding:9px 11px; border:1px solid var(--border); border-radius:8px; font-size:14px; background:#fff; color:var(--ink); font-family:inherit;}
+  input:focus, select:focus{outline:2px solid var(--primary); outline-offset:1px;}
+  .primary-btn{background:var(--primary); color:#fff; border:none; padding:10px 18px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;}
+  .primary-btn:hover{background:var(--primary-dark);}
+  .primary-btn:disabled{opacity:.5; cursor:default;}
+  .ghost-btn{background:#fff; color:var(--primary); border:1px solid var(--border); padding:8px 14px; border-radius:8px; font-size:13px; cursor:pointer;}
+  .ghost-btn:hover{border-color:var(--primary);}
+  .danger-btn{background:#fff; color:var(--danger); border:1px solid var(--danger); padding:6px 12px; border-radius:7px; font-size:12.5px; cursor:pointer;}
+  table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  th{text-align:left; font-size:11.5px; color:var(--ink-soft); font-weight:700; text-transform:uppercase; letter-spacing:.03em; padding:8px 10px; border-bottom:2px solid var(--border);}
+  td{padding:10px; border-bottom:1px solid var(--border); vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  .badge{display:inline-block; padding:3px 10px; border-radius:20px; font-size:11.5px; font-weight:600;}
+  .badge.pendente{background:#FBF0DC; color:#8A5E17;}
+  .badge.pago{background:#E2F0E8; color:var(--ok);}
+  .badge.atrasado{background:#F7E2DC; color:var(--danger);}
+  .badge.pagar{background:#F7E2DC; color:var(--danger);}
+  .badge.receber{background:#E2F0E8; color:var(--ok);}
+  .empty-state{text-align:center; color:var(--ink-faint); padding:40px 0; font-size:14px;}
+  .login-wrap{min-height:100vh; display:flex; align-items:center; justify-content:center; background:var(--primary-dark);}
+  .login-card{background:#fff; border-radius:18px; padding:38px 34px; width:340px; box-shadow:0 20px 60px rgba(0,0,0,.3);}
+  .login-card h1{font-size:20px; margin:0 0 4px;}
+  .login-card p{font-size:13.5px; color:var(--ink-soft); margin:0 0 22px;}
+  .login-input{width:100%; padding:11px 12px; border:1px solid var(--border); border-radius:9px; font-size:14px; margin-bottom:12px;}
+  .login-error{background:#F7E2DC; color:var(--danger); padding:10px 12px; border-radius:8px; font-size:13px; margin-bottom:12px;}
+  .msg{padding:10px 14px; border-radius:8px; font-size:13.5px; margin-top:8px;}
+  .msg.ok{background:#E2F0E8; color:var(--ok);}
+  .msg.err{background:#F7E2DC; color:var(--danger);}
+  .toolbar{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; align-items:center;}
+  .search-input{flex:1; min-width:180px;}
+  .filter-select{min-width:140px;}
+  .modal-backdrop{position:fixed; inset:0; background:rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; z-index:100;}
+  .modal{background:#fff; border-radius:14px; padding:24px; width:380px; max-width:92vw;}
+  .modal h3{margin-bottom:14px;}
+  .modal-actions{display:flex; justify-content:flex-end; gap:10px;}
+  .chip{display:inline-flex; align-items:center; gap:6px; background:#F0EEE7; border-radius:20px; padding:5px 12px; font-size:13px; margin:0 6px 6px 0;}
+  .chip button{background:none; border:none; color:var(--ink-faint); cursor:pointer; font-size:13px; padding:0;}
+  .loading{display:flex; align-items:center; justify-content:center; color:var(--ink-faint); font-size:14px;}
+  @media (max-width:720px){
+    .shell{flex-direction:column;}
+    .sidebar{width:100%; flex-direction:row; overflow-x:auto; padding:12px;}
+    .sidebar .brand{display:none;}
+    .nav-item{white-space:nowrap; border-radius:20px;}
+    .main{padding:16px;}
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const app = document.getElementById('app');
+const STATE = { session: null, usuarios: [], categorias: [], lancamentos: [], route: {page:'dashboard'} };
+
+// ---------------- ARMAZENAMENTO (via função no Vercel) ----------------
+async function safeGet(key){
+  try{
+    const res = await fetch(`/api/kv?key=${encodeURIComponent(key)}`);
+    if(!res.ok) throw new Error('falha ao buscar '+key);
+    const data = await res.json();
+    return data.value;
+  }catch(e){ console.error('safeGet', key, e); return null; }
+}
+async function safeSet(key, value){
+  try{
+    const res = await fetch('/api/kv', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({key, value}),
+    });
+    if(!res.ok) throw new Error('falha ao salvar '+key);
+    return true;
+  }catch(e){ console.error('safeSet', key, e); return false; }
+}
+async function hashSenha(senha){
+  const res = await fetch('/api/hash-senha', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({senha}),
+  });
+  if(!res.ok) throw new Error('Não consegui criptografar a senha. Tente de novo.');
+  const data = await res.json();
+  return data.hash;
+}
+
+// ---------------- HELPERS ----------------
+function genId(){ return 'l'+Date.now()+'_'+Math.random().toString(36).slice(2,8); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function currentMonthKey(){ return new Date().toISOString().slice(0,7); }
+function fmtMoney(v){ return (v||0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'}); }
+function fmtDatePt(iso){
+  if(!iso) return '—';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+function diasParaVencer(iso){
+  const hoje = new Date(todayStr()+'T00:00:00');
+  const venc = new Date(iso+'T00:00:00');
+  return Math.round((venc-hoje)/(1000*60*60*24));
+}
+function nomeMesPt(mesChave){
+  const [ano, mes] = mesChave.split('-');
+  const nomes = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  return `${nomes[Number(mes)-1]} de ${ano}`;
+}
+function confirmarAcao(msg){
+  return new Promise(resolve => {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.innerHTML = `
+      <div class="modal">
+        <h3>Confirmar</h3>
+        <p style="font-size:14px; color:var(--ink-soft);">${msg}</p>
+        <div class="modal-actions">
+          <button class="ghost-btn" id="cancelarConf">Cancelar</button>
+          <button class="primary-btn" id="confirmarConf">Confirmar</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(backdrop);
+    backdrop.querySelector('#cancelarConf').onclick = () => { backdrop.remove(); resolve(false); };
+    backdrop.querySelector('#confirmarConf').onclick = () => { backdrop.remove(); resolve(true); };
+  });
+}
+
+async function loadAll(){
+  STATE.usuarios = (await safeGet('fin:usuarios')) || [];
+  STATE.categorias = (await safeGet('fin:categorias')) || [];
+  STATE.lancamentos = (await safeGet('fin:lancamentos')) || [];
+
+  // Migração única: cria o primeiro usuário admin, se ainda não existir ninguém.
+  if(STATE.usuarios.length === 0){
+    const hash = await hashSenha('michael123');
+    STATE.usuarios = [{nome:'Michael', usuario:'michael', senha:hash, admin:true}];
+    await safeSet('fin:usuarios', STATE.usuarios);
+  }
+  if(STATE.categorias.length === 0){
+    STATE.categorias = ['Moradia','Alimentação','Transporte','Saúde','Educação','Lazer','Salário','Outros'];
+    await safeSet('fin:categorias', STATE.categorias);
+  }
+}
+
+function render(){
+  if(!STATE.session){ renderLogin(); return; }
+  renderShell();
+}
+
+// ---------------- LOGIN ----------------
+function renderLogin(){
+  app.innerHTML = `
+    <div class="login-wrap">
+      <div class="login-card">
+        <h1>💰 Finanças</h1>
+        <p>Entre com seu usuário e senha.</p>
+        <div id="loginErrorSlot"></div>
+        <input type="text" id="loginUser" class="login-input" placeholder="Usuário" autocomplete="username">
+        <input type="password" id="loginPass" class="login-input" placeholder="Senha" autocomplete="current-password">
+        <button class="primary-btn" id="loginSubmitBtn" style="width:100%;">Entrar</button>
+      </div>
+    </div>
+  `;
+  const submit = () => doLogin();
+  document.getElementById('loginSubmitBtn').onclick = submit;
+  document.getElementById('loginPass').onkeydown = (e) => { if(e.key==='Enter') submit(); };
+
+  async function doLogin(){
+    const errSlot = document.getElementById('loginErrorSlot');
+    const btn = document.getElementById('loginSubmitBtn');
+    const user = document.getElementById('loginUser').value.trim().toLowerCase();
+    const pass = document.getElementById('loginPass').value.trim();
+    if(!user || !pass){ errSlot.innerHTML = `<div class="login-error">Preencha usuário e senha.</div>`; return; }
+    btn.disabled = true; btn.textContent = 'Entrando...';
+    try{
+      const res = await fetch('/api/login', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({usuario:user, senha:pass}),
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.error || 'Falha ao entrar.');
+      if(!data.ok){ errSlot.innerHTML = `<div class="login-error">${data.message || 'Usuário ou senha incorretos.'}</div>`; return; }
+      STATE.session = {nome:data.nome, usuario:data.usuario, admin:data.admin};
+      STATE.route = {page:'dashboard'};
+      await loadAll();
+      render();
+    }catch(err){
+      errSlot.innerHTML = `<div class="login-error">Erro ao entrar: ${err.message}</div>`;
+    }finally{
+      btn.disabled = false; btn.textContent = 'Entrar';
+    }
+  }
+}
+
+// ---------------- SHELL / NAV ----------------
+function sidebarHTML(items){
+  return `
+    <div class="sidebar">
+      <div class="brand"><span class="dot"></span> Finanças</div>
+      ${items.map(it => `<div class="nav-item ${STATE.route.page===it.page?'active':''}" data-page="${it.page}">${it.label}</div>`).join('')}
+    </div>
+  `;
+}
+function topbarHTML(){
+  return `
+    <div class="topbar">
+      <div class="topbar-user">
+        <div class="whoami-avatar whoami-avatar-fallback">${STATE.session.nome[0].toUpperCase()}</div>
+        <div class="whoami">Conectado como<b>${STATE.session.nome}</b></div>
+        <button class="logout-btn" id="btn-logout">Sair</button>
+      </div>
+    </div>
+  `;
+}
+function bindNav(){
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.onclick = () => { STATE.route = {page: el.dataset.page}; renderShell(); };
+  });
+  document.getElementById('btn-logout').onclick = () => { STATE.session = null; render(); };
+}
+
+async function renderShell(){
+  const items = [
+    {page:'dashboard', label:'Painel'},
+    {page:'lancamentos', label:'Lançamentos'},
+    {page:'nova-conta', label:'+ Nova conta'},
+    {page:'relatorios', label:'Relatórios'},
+    {page:'categorias', label:'Categorias'},
+  ];
+  if(STATE.session.admin) items.push({page:'usuarios', label:'Usuários'});
+
+  app.innerHTML = `<div class="shell">${sidebarHTML(items)}<div class="main"><div id="topbarSlot"></div><div id="mainContent"></div></div></div>`;
+  document.getElementById('topbarSlot').innerHTML = topbarHTML();
+  bindNav();
+
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `<div class="loading" style="min-height:200px;">Carregando…</div>`;
+
+  if(STATE.route.page==='dashboard') renderDashboard(main);
+  else if(STATE.route.page==='lancamentos') renderLancamentos(main);
+  else if(STATE.route.page==='nova-conta') renderNovaConta(main);
+  else if(STATE.route.page==='relatorios') renderRelatorios(main);
+  else if(STATE.route.page==='categorias') renderCategorias(main);
+  else if(STATE.route.page==='usuarios' && STATE.session.admin) renderUsuarios(main);
+  else renderDashboard(main);
+}
+
+// ---------------- DASHBOARD ----------------
+function renderDashboard(main){
+  const mesAtual = currentMonthKey();
+  const doMes = STATE.lancamentos.filter(l => l.vencimento.slice(0,7) === mesAtual);
+  const aPagar = doMes.filter(l => l.tipo==='pagar' && l.status==='pendente').reduce((s,l)=>s+l.valor,0);
+  const aReceber = doMes.filter(l => l.tipo==='receber' && l.status==='pendente').reduce((s,l)=>s+l.valor,0);
+  const pago = doMes.filter(l => l.tipo==='pagar' && l.status==='pago').reduce((s,l)=>s+l.valor,0);
+  const recebido = doMes.filter(l => l.tipo==='receber' && l.status==='pago').reduce((s,l)=>s+l.valor,0);
+  const saldoMes = recebido - pago;
+
+  const hoje = todayStr();
+  const pendentes = STATE.lancamentos.filter(l => l.status==='pendente');
+  const atrasadas = pendentes.filter(l => l.vencimento < hoje).sort((a,b)=>a.vencimento<b.vencimento?-1:1);
+  const vencendoSemana = pendentes.filter(l => l.vencimento >= hoje && diasParaVencer(l.vencimento) <= 7).sort((a,b)=>a.vencimento<b.vencimento?-1:1);
+
+  main.innerHTML = `
+    <div class="page-header"><div class="eyebrow">Painel</div><h2>Resumo de ${nomeMesPt(mesAtual)}</h2></div>
+    <div class="stat-grid">
+      <div class="stat-card danger"><div class="num">${fmtMoney(aPagar)}</div><div class="label">A pagar este mês</div></div>
+      <div class="stat-card ok"><div class="num">${fmtMoney(aReceber)}</div><div class="label">A receber este mês</div></div>
+      <div class="stat-card"><div class="num">${fmtMoney(pago)}</div><div class="label">Já pago este mês</div></div>
+      <div class="stat-card"><div class="num">${fmtMoney(recebido)}</div><div class="label">Já recebido este mês</div></div>
+      <div class="stat-card ${saldoMes>=0?'ok':'danger'}"><div class="num">${fmtMoney(saldoMes)}</div><div class="label">Saldo do mês (recebido − pago)</div></div>
+    </div>
+
+    <div class="panel" style="border-left:4px solid var(--danger);">
+      <h3>⚠️ Atrasadas (${atrasadas.length})</h3>
+      ${atrasadas.length===0 ? `<p class="hint" style="margin:0;">Nenhuma conta atrasada. 🎉</p>` : `
+        <table>
+          <thead><tr><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Venceu</th><th>Valor</th><th></th></tr></thead>
+          <tbody>${atrasadas.map(l => linhaLancamentoResumo(l)).join('')}</tbody>
+        </table>
+      `}
+    </div>
+
+    <div class="panel" style="border-left:4px solid var(--warn);">
+      <h3>🔔 Vencendo nos próximos 7 dias (${vencendoSemana.length})</h3>
+      ${vencendoSemana.length===0 ? `<p class="hint" style="margin:0;">Nada vencendo essa semana.</p>` : `
+        <table>
+          <thead><tr><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Vence</th><th>Valor</th><th></th></tr></thead>
+          <tbody>${vencendoSemana.map(l => linhaLancamentoResumo(l)).join('')}</tbody>
+        </table>
+      `}
+    </div>
+  `;
+  bindMarcarPago(main);
+}
+
+function linhaLancamentoResumo(l){
+  return `
+    <tr>
+      <td>${l.descricao}</td>
+      <td>${l.categoria}</td>
+      <td><span class="badge ${l.tipo}">${l.tipo==='pagar'?'A pagar':'A receber'}</span></td>
+      <td>${fmtDatePt(l.vencimento)}</td>
+      <td>${fmtMoney(l.valor)}</td>
+      <td><button class="ghost-btn btnMarcarPago" data-id="${l.id}">Marcar ${l.tipo==='pagar'?'pago':'recebido'}</button></td>
+    </tr>
+  `;
+}
+function bindMarcarPago(main){
+  main.querySelectorAll('.btnMarcarPago').forEach(btn => {
+    btn.onclick = async () => {
+      const l = STATE.lancamentos.find(x=>x.id===btn.dataset.id);
+      l.status = 'pago';
+      l.dataPagamento = todayStr();
+      await safeSet('fin:lancamentos', STATE.lancamentos);
+      renderShell();
+    };
+  });
+}
+
+// ---------------- LANÇAMENTOS ----------------
+function renderLancamentos(main){
+  main.innerHTML = `
+    <div class="page-header"><div class="eyebrow">Lançamentos</div><h2>Todas as contas</h2></div>
+    <div class="toolbar">
+      <input type="text" class="search-input" id="buscaLanc" placeholder="Buscar por descrição...">
+      <select class="filter-select" id="filtroTipo">
+        <option value="">Todos os tipos</option>
+        <option value="pagar">A pagar</option>
+        <option value="receber">A receber</option>
+      </select>
+      <select class="filter-select" id="filtroStatus">
+        <option value="">Todos os status</option>
+        <option value="pendente">Pendente</option>
+        <option value="pago">Pago/Recebido</option>
+      </select>
+      <select class="filter-select" id="filtroCategoria">
+        <option value="">Todas as categorias</option>
+        ${STATE.categorias.map(c=>`<option value="${c}">${c}</option>`).join('')}
+      </select>
+      <input type="month" id="filtroMes" value="${currentMonthKey()}">
+      <button class="ghost-btn" id="btnLimparMes">Ver todos os meses</button>
+    </div>
+    <div id="listaLancamentos"></div>
+  `;
+  let filtroMesAtivo = true;
+
+  function draw(){
+    const busca = document.getElementById('buscaLanc').value.trim().toLowerCase();
+    const tipo = document.getElementById('filtroTipo').value;
+    const status = document.getElementById('filtroStatus').value;
+    const categoria = document.getElementById('filtroCategoria').value;
+    const mes = document.getElementById('filtroMes').value;
+    let lista = STATE.lancamentos.slice();
+    if(busca) lista = lista.filter(l => l.descricao.toLowerCase().includes(busca));
+    if(tipo) lista = lista.filter(l => l.tipo===tipo);
+    if(status) lista = lista.filter(l => l.status===status);
+    if(categoria) lista = lista.filter(l => l.categoria===categoria);
+    if(filtroMesAtivo && mes) lista = lista.filter(l => l.vencimento.slice(0,7)===mes);
+    lista.sort((a,b) => a.vencimento<b.vencimento?-1:1);
+
+    const box = document.getElementById('listaLancamentos');
+    if(lista.length===0){ box.innerHTML = `<div class="empty-state">Nenhum lançamento encontrado.</div>`; return; }
+    box.innerHTML = `
+      <div class="panel">
+        <table>
+          <thead><tr><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Lançado por</th><th></th></tr></thead>
+          <tbody>
+            ${lista.map(l => {
+              const atrasado = l.status==='pendente' && l.vencimento < todayStr();
+              return `
+                <tr>
+                  <td>${l.descricao}</td>
+                  <td>${l.categoria}</td>
+                  <td><span class="badge ${l.tipo}">${l.tipo==='pagar'?'A pagar':'A receber'}</span></td>
+                  <td>${fmtDatePt(l.vencimento)}</td>
+                  <td>${fmtMoney(l.valor)}</td>
+                  <td><span class="badge ${atrasado?'atrasado':l.status}">${atrasado?'Atrasado':(l.status==='pago'?(l.tipo==='pagar'?'Pago':'Recebido'):'Pendente')}</span></td>
+                  <td style="font-size:12.5px; color:var(--ink-soft);">${l.criadoPor||'—'}</td>
+                  <td style="white-space:nowrap;">
+                    ${l.status==='pendente' ? `<button class="ghost-btn btnMarcarPago" data-id="${l.id}">Marcar ${l.tipo==='pagar'?'pago':'recebido'}</button>` : `<button class="ghost-btn btnReabrir" data-id="${l.id}">Reabrir</button>`}
+                    <button class="danger-btn btnExcluirLanc" data-id="${l.id}">Excluir</button>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+    bindMarcarPago(box);
+    box.querySelectorAll('.btnReabrir').forEach(btn => {
+      btn.onclick = async () => {
+        const l = STATE.lancamentos.find(x=>x.id===btn.dataset.id);
+        l.status = 'pendente'; l.dataPagamento = null;
+        await safeSet('fin:lancamentos', STATE.lancamentos);
+        draw();
+      };
+    });
+    box.querySelectorAll('.btnExcluirLanc').forEach(btn => {
+      btn.onclick = async () => {
+        if(!(await confirmarAcao('Excluir esse lançamento? Essa ação não pode ser desfeita.'))) return;
+        STATE.lancamentos = STATE.lancamentos.filter(x=>x.id!==btn.dataset.id);
+        await safeSet('fin:lancamentos', STATE.lancamentos);
+        draw();
+      };
+    });
+  }
+
+  document.getElementById('buscaLanc').oninput = draw;
+  document.getElementById('filtroTipo').onchange = draw;
+  document.getElementById('filtroStatus').onchange = draw;
+  document.getElementById('filtroCategoria').onchange = draw;
+  document.getElementById('filtroMes').onchange = draw;
+  document.getElementById('btnLimparMes').onclick = () => {
+    filtroMesAtivo = !filtroMesAtivo;
+    document.getElementById('btnLimparMes').textContent = filtroMesAtivo ? 'Ver todos os meses' : 'Filtrar só esse mês';
+    draw();
+  };
+  draw();
+}
+
+// ---------------- NOVA CONTA ----------------
+function renderNovaConta(main){
+  main.innerHTML = `
+    <div class="page-header"><div class="eyebrow">Nova conta</div><h2>Lançar conta a pagar ou receber</h2></div>
+    <div class="panel" style="max-width:520px;">
+      <div class="form-row">
+        <div style="flex:1;">
+          <label class="field-label">Tipo</label>
+          <select id="novoTipo">
+            <option value="pagar">A pagar</option>
+            <option value="receber">A receber</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div style="flex:1;">
+          <label class="field-label">Descrição</label>
+          <input type="text" id="novaDescricao" placeholder="Ex: Aluguel, Cliente Fulano...">
+        </div>
+      </div>
+      <div class="form-row">
+        <div style="flex:1;">
+          <label class="field-label">Valor (R$)</label>
+          <input type="number" id="novoValor" step="0.01" min="0" placeholder="0,00">
+        </div>
+        <div style="flex:1;">
+          <label class="field-label">Vencimento</label>
+          <input type="date" id="novoVencimento" value="${todayStr()}">
+        </div>
+      </div>
+      <div class="form-row">
+        <div style="flex:1;">
+          <label class="field-label">Categoria</label>
+          <select id="novaCategoria">
+            ${STATE.categorias.map(c=>`<option value="${c}">${c}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <button class="primary-btn" id="btnSalvarConta">Salvar conta</button>
+      <div id="msgNovaConta"></div>
+    </div>
+  `;
+  document.getElementById('btnSalvarConta').onclick = async () => {
+    const msg = document.getElementById('msgNovaConta');
+    const tipo = document.getElementById('novoTipo').value;
+    const descricao = document.getElementById('novaDescricao').value.trim();
+    const valor = Number(document.getElementById('novoValor').value);
+    const vencimento = document.getElementById('novoVencimento').value;
+    const categoria = document.getElementById('novaCategoria').value;
+    if(!descricao || !valor || valor<=0 || !vencimento){
+      msg.innerHTML = `<div class="msg err">Preencha descrição, valor (maior que zero) e vencimento.</div>`;
+      return;
+    }
+    STATE.lancamentos.push({
+      id: genId(), tipo, descricao, valor, categoria, vencimento,
+      status: 'pendente', dataPagamento: null,
+      criadoPor: STATE.session.nome, criadoEm: todayStr(),
+    });
+    await safeSet('fin:lancamentos', STATE.lancamentos);
+    msg.innerHTML = `<div class="msg ok">Conta lançada com sucesso!</div>`;
+    document.getElementById('novaDescricao').value = '';
+    document.getElementById('novoValor').value = '';
+  };
+}
+
+// ---------------- RELATÓRIOS ----------------
+function renderRelatorios(main){
+  const mesAtual = currentMonthKey();
+  main.innerHTML = `
+    <div class="page-header"><div class="eyebrow">Relatórios</div><h2>Visão geral</h2></div>
+    <div class="panel">
+      <label class="field-label">Mês de referência (gráfico por categoria)</label>
+      <input type="month" id="mesRelatorio" value="${mesAtual}" style="max-width:180px;">
+    </div>
+    <div class="panel">
+      <h3>Gastos por categoria</h3>
+      <canvas id="graficoCategorias" height="90"></canvas>
+    </div>
+    <div class="panel">
+      <h3>Evolução — últimos 6 meses (pago vs recebido)</h3>
+      <canvas id="graficoEvolucao" height="90"></canvas>
+    </div>
+  `;
+  let chartCat, chartEvo;
+  function desenharGraficoCategoria(){
+    const mes = document.getElementById('mesRelatorio').value;
+    const doMes = STATE.lancamentos.filter(l => l.vencimento.slice(0,7)===mes && l.tipo==='pagar');
+    const porCategoria = {};
+    doMes.forEach(l => { porCategoria[l.categoria] = (porCategoria[l.categoria]||0) + l.valor; });
+    const labels = Object.keys(porCategoria);
+    const valores = Object.values(porCategoria);
+    if(chartCat) chartCat.destroy();
+    chartCat = new Chart(document.getElementById('graficoCategorias'), {
+      type: 'bar',
+      data: { labels, datasets: [{ label:'Valor gasto', data: valores, backgroundColor:'#1B3A4B' }] },
+      options: { plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:v=>fmtMoney(v)}}} }
+    });
+  }
+  function desenharGraficoEvolucao(){
+    const meses = [];
+    const d = new Date();
+    for(let i=5;i>=0;i--){
+      const dt = new Date(d.getFullYear(), d.getMonth()-i, 1);
+      meses.push(dt.toISOString().slice(0,7));
+    }
+    const pagoPorMes = meses.map(m => STATE.lancamentos.filter(l=>l.tipo==='pagar' && l.status==='pago' && l.vencimento.slice(0,7)===m).reduce((s,l)=>s+l.valor,0));
+    const recebidoPorMes = meses.map(m => STATE.lancamentos.filter(l=>l.tipo==='receber' && l.status==='pago' && l.vencimento.slice(0,7)===m).reduce((s,l)=>s+l.valor,0));
+    if(chartEvo) chartEvo.destroy();
+    chartEvo = new Chart(document.getElementById('graficoEvolucao'), {
+      type: 'line',
+      data: {
+        labels: meses.map(nomeMesPt),
+        datasets: [
+          { label:'Pago', data: pagoPorMes, borderColor:'#B5482F', backgroundColor:'#B5482F', tension:.3 },
+          { label:'Recebido', data: recebidoPorMes, borderColor:'#2F7D5A', backgroundColor:'#2F7D5A', tension:.3 },
+        ]
+      },
+      options: { scales:{y:{ticks:{callback:v=>fmtMoney(v)}}} }
+    });
+  }
+  document.getElementById('mesRelatorio').onchange = desenharGraficoCategoria;
+  desenharGraficoCategoria();
+  desenharGraficoEvolucao();
+}
+
+// ---------------- CATEGORIAS ----------------
+function renderCategorias(main){
+  main.innerHTML = `
+    <div class="page-header"><div class="eyebrow">Categorias</div><h2>Gerenciar categorias</h2></div>
+    <div class="panel">
+      <div class="form-row">
+        <input type="text" id="novaCategoriaInput" placeholder="Nome da nova categoria">
+        <button class="primary-btn" id="btnAddCategoria">Adicionar</button>
+      </div>
+      <div id="listaCategorias"></div>
+    </div>
+  `;
+  function draw(){
+    document.getElementById('listaCategorias').innerHTML = STATE.categorias.map(c => `
+      <span class="chip">${c} <button class="btnRemoverCategoria" data-nome="${c}">✕</button></span>
+    `).join('');
+    document.querySelectorAll('.btnRemoverCategoria').forEach(btn => {
+      btn.onclick = async () => {
+        const emUso = STATE.lancamentos.some(l => l.categoria === btn.dataset.nome);
+        if(emUso && !(await confirmarAcao(`A categoria "${btn.dataset.nome}" está em uso em algum lançamento. Remover mesmo assim?`))) return;
+        STATE.categorias = STATE.categorias.filter(c => c !== btn.dataset.nome);
+        await safeSet('fin:categorias', STATE.categorias);
+        draw();
+      };
+    });
+  }
+  document.getElementById('btnAddCategoria').onclick = async () => {
+    const input = document.getElementById('novaCategoriaInput');
+    const nome = input.value.trim();
+    if(!nome) return;
+    if(STATE.categorias.includes(nome)){ input.value=''; return; }
+    STATE.categorias.push(nome);
+    await safeSet('fin:categorias', STATE.categorias);
+    input.value = '';
+    draw();
+  };
+  draw();
+}
+
+// ---------------- USUÁRIOS (admin) ----------------
+function renderUsuarios(main){
+  main.innerHTML = `
+    <div class="page-header"><div class="eyebrow">Usuários</div><h2>Quem tem acesso</h2></div>
+    <div class="panel">
+      <h3>Adicionar pessoa</h3>
+      <div class="form-row">
+        <input type="text" id="novoNomeUsuario" placeholder="Nome">
+        <input type="text" id="novoLoginUsuario" placeholder="Usuário (login)">
+        <input type="text" id="novaSenhaUsuario" placeholder="Senha">
+        <button class="primary-btn" id="btnAddUsuario">Adicionar</button>
+      </div>
+      <div id="msgUsuarios"></div>
+    </div>
+    <div class="panel">
+      <h3>Pessoas com acesso</h3>
+      <table>
+        <thead><tr><th>Nome</th><th>Usuário</th><th>Admin</th><th>Nova senha</th><th></th></tr></thead>
+        <tbody>
+          ${STATE.usuarios.map(u => `
+            <tr>
+              <td>${u.nome}</td>
+              <td>${u.usuario}</td>
+              <td>${u.admin ? 'Sim' : 'Não'}</td>
+              <td><input type="text" class="senhaResetInput" data-usuario="${u.usuario}" placeholder="Deixe em branco pra manter" style="width:160px;"></td>
+              <td>
+                <button class="ghost-btn btnSalvarSenhaUsuario" data-usuario="${u.usuario}">Salvar</button>
+                ${u.usuario!==STATE.session.usuario ? `<button class="danger-btn btnRemoverUsuario" data-usuario="${u.usuario}">Remover</button>` : ''}
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+  document.getElementById('btnAddUsuario').onclick = async () => {
+    const msg = document.getElementById('msgUsuarios');
+    const nome = document.getElementById('novoNomeUsuario').value.trim();
+    const usuario = document.getElementById('novoLoginUsuario').value.trim().toLowerCase();
+    const senha = document.getElementById('novaSenhaUsuario').value.trim();
+    if(!nome || !usuario || !senha){ msg.innerHTML = `<div class="msg err">Preencha nome, usuário e senha.</div>`; return; }
+    if(STATE.usuarios.some(u=>u.usuario===usuario)){ msg.innerHTML = `<div class="msg err">Esse usuário já existe.</div>`; return; }
+    const hash = await hashSenha(senha);
+    STATE.usuarios.push({nome, usuario, senha:hash, admin:false});
+    await safeSet('fin:usuarios', STATE.usuarios);
+    msg.innerHTML = `<div class="msg ok">${nome} adicionado(a) com sucesso.</div>`;
+    renderUsuarios(main);
+  };
+  main.querySelectorAll('.btnSalvarSenhaUsuario').forEach(btn => {
+    btn.onclick = async () => {
+      const input = main.querySelector(`.senhaResetInput[data-usuario="${btn.dataset.usuario}"]`);
+      const novaSenha = input.value.trim();
+      if(!novaSenha) return;
+      const u = STATE.usuarios.find(x=>x.usuario===btn.dataset.usuario);
+      u.senha = await hashSenha(novaSenha);
+      await safeSet('fin:usuarios', STATE.usuarios);
+      input.value = '';
+      document.getElementById('msgUsuarios').innerHTML = `<div class="msg ok">Senha de ${u.nome} atualizada.</div>`;
+    };
+  });
+  main.querySelectorAll('.btnRemoverUsuario').forEach(btn => {
+    btn.onclick = async () => {
+      if(!(await confirmarAcao('Remover o acesso dessa pessoa?'))) return;
+      STATE.usuarios = STATE.usuarios.filter(u=>u.usuario!==btn.dataset.usuario);
+      await safeSet('fin:usuarios', STATE.usuarios);
+      renderUsuarios(main);
+    };
+  });
+}
+
+// ---------------- INIT ----------------
+(async function init(){
+  render();
+})();
+</script>
+</body>
+</html>

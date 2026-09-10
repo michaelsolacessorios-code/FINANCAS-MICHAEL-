@@ -129,6 +129,27 @@ async function hashSenha(senha){
 
 // ---------------- HELPERS ----------------
 function genId(){ return 'l'+Date.now()+'_'+Math.random().toString(36).slice(2,8); }
+function resizeImagemParaBase64(file, maxLado=200){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Falha ao ler a imagem.'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Arquivo de imagem inválido.'));
+      img.onload = () => {
+        let {width, height} = img;
+        if(width > height){ if(width>maxLado){ height*=maxLado/width; width=maxLado; } }
+        else{ if(height>maxLado){ width*=maxLado/height; height=maxLado; } }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 function currentMonthKey(){ return new Date().toISOString().slice(0,7); }
 function fmtMoney(v){ return (v||0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'}); }
@@ -225,6 +246,8 @@ function renderLogin(){
       STATE.session = {nome:data.nome, usuario:data.usuario, admin:data.admin};
       STATE.route = {page:'dashboard'};
       await loadAll();
+      const meuUsuario = STATE.usuarios.find(u=>u.usuario===data.usuario);
+      STATE.session.foto = meuUsuario ? meuUsuario.foto || null : null;
       render();
     }catch(err){
       errSlot.innerHTML = `<div class="login-error">Erro ao entrar: ${err.message}</div>`;
@@ -247,7 +270,7 @@ function topbarHTML(){
   return `
     <div class="topbar">
       <div class="topbar-user">
-        <div class="whoami-avatar whoami-avatar-fallback">${STATE.session.nome[0].toUpperCase()}</div>
+        ${STATE.session.foto ? `<img class="whoami-avatar" src="${STATE.session.foto}" alt="${STATE.session.nome}">` : `<div class="whoami-avatar whoami-avatar-fallback">${STATE.session.nome[0].toUpperCase()}</div>`}
         <div class="whoami">Conectado como<b>${STATE.session.nome}</b></div>
         <button class="logout-btn" id="btn-logout">Sair</button>
       </div>
@@ -268,6 +291,7 @@ async function renderShell(){
     {page:'nova-conta', label:'+ Nova conta'},
     {page:'relatorios', label:'Relatórios'},
     {page:'categorias', label:'Categorias'},
+    {page:'perfil', label:'Meu perfil'},
   ];
   if(STATE.session.admin) items.push({page:'usuarios', label:'Usuários'});
 
@@ -283,8 +307,72 @@ async function renderShell(){
   else if(STATE.route.page==='nova-conta') renderNovaConta(main);
   else if(STATE.route.page==='relatorios') renderRelatorios(main);
   else if(STATE.route.page==='categorias') renderCategorias(main);
+  else if(STATE.route.page==='perfil') renderMeuPerfil(main);
   else if(STATE.route.page==='usuarios' && STATE.session.admin) renderUsuarios(main);
   else renderDashboard(main);
+}
+
+// Monta o quadro de resumo do mês de UMA pessoa específica (filtra pelo "criadoPor").
+function painelPessoaHTML(nomePessoa, doMes){
+  const usuarioPessoa = STATE.usuarios.find(u=>u.nome===nomePessoa);
+  const foto = usuarioPessoa && usuarioPessoa.foto;
+  const dela = doMes.filter(l => l.criadoPor === nomePessoa);
+  const aPagar = dela.filter(l => l.tipo==='pagar' && l.status==='pendente').reduce((s,l)=>s+l.valor,0);
+  const aReceber = dela.filter(l => l.tipo==='receber' && l.status==='pendente').reduce((s,l)=>s+l.valor,0);
+  const pago = dela.filter(l => l.tipo==='pagar' && l.status==='pago').reduce((s,l)=>s+l.valor,0);
+  const recebido = dela.filter(l => l.tipo==='receber' && l.status==='pago').reduce((s,l)=>s+l.valor,0);
+  const saldo = recebido - pago;
+  return `
+    <div class="panel">
+      <h3 style="display:flex; align-items:center; gap:8px;">
+        ${foto ? `<img src="${foto}" alt="${nomePessoa}" style="width:26px; height:26px; border-radius:50%; object-fit:cover;">` : '👤'}
+        ${nomePessoa}
+      </h3>
+      <table>
+        <tbody>
+          <tr><td class="hint">A pagar</td><td style="text-align:right; color:var(--danger); font-weight:600;">${fmtMoney(aPagar)}</td></tr>
+          <tr><td class="hint">A receber</td><td style="text-align:right; color:var(--ok); font-weight:600;">${fmtMoney(aReceber)}</td></tr>
+          <tr><td class="hint">Já pago</td><td style="text-align:right;">${fmtMoney(pago)}</td></tr>
+          <tr><td class="hint">Já recebido</td><td style="text-align:right;">${fmtMoney(recebido)}</td></tr>
+          <tr><td class="hint"><b>Saldo do mês</b></td><td style="text-align:right; font-weight:700; color:${saldo>=0?'var(--ok)':'var(--danger)'};">${fmtMoney(saldo)}</td></tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+// ---------------- MEU PERFIL ----------------
+function renderMeuPerfil(main){
+  const eu = STATE.usuarios.find(u=>u.usuario===STATE.session.usuario);
+  main.innerHTML = `
+    <div class="page-header"><div class="eyebrow">Meu perfil</div><h2>Sua foto</h2></div>
+    <div class="panel" style="max-width:420px;">
+      <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
+        ${eu && eu.foto ? `<img src="${eu.foto}" alt="${STATE.session.nome}" style="width:70px; height:70px; border-radius:50%; object-fit:cover;">` : `<div class="whoami-avatar whoami-avatar-fallback" style="width:70px; height:70px; font-size:26px;">${STATE.session.nome[0].toUpperCase()}</div>`}
+        <div>
+          <div style="font-weight:700; font-size:16px;">${STATE.session.nome}</div>
+          <div class="hint" style="margin:2px 0 0;">Essa foto aparece no topo e no seu painel.</div>
+        </div>
+      </div>
+      <input type="file" id="f_foto_perfil" accept="image/*">
+      <div id="msgPerfil"></div>
+    </div>
+  `;
+  document.getElementById('f_foto_perfil').onchange = async () => {
+    const file = document.getElementById('f_foto_perfil').files[0];
+    if(!file) return;
+    const msg = document.getElementById('msgPerfil');
+    try{
+      const base64 = await resizeImagemParaBase64(file);
+      eu.foto = base64;
+      STATE.session.foto = base64;
+      await safeSet('fin:usuarios', STATE.usuarios);
+      msg.innerHTML = `<div class="msg ok">Foto atualizada!</div>`;
+      renderShell();
+    }catch(err){
+      msg.innerHTML = `<div class="msg err">Não consegui processar essa imagem.</div>`;
+    }
+  };
 }
 
 // ---------------- DASHBOARD ----------------
@@ -302,6 +390,9 @@ function renderDashboard(main){
   const atrasadas = pendentes.filter(l => l.vencimento < hoje).sort((a,b)=>a.vencimento<b.vencimento?-1:1);
   const vencendoSemana = pendentes.filter(l => l.vencimento >= hoje && diasParaVencer(l.vencimento) <= 7).sort((a,b)=>a.vencimento<b.vencimento?-1:1);
 
+  const totalDividas = pendentes.filter(l => l.tipo==='pagar').reduce((s,l)=>s+l.valor,0);
+  const totalAReceberGeral = pendentes.filter(l => l.tipo==='receber').reduce((s,l)=>s+l.valor,0);
+
   main.innerHTML = `
     <div class="page-header"><div class="eyebrow">Painel</div><h2>Resumo de ${nomeMesPt(mesAtual)}</h2></div>
     <div class="stat-grid">
@@ -310,6 +401,22 @@ function renderDashboard(main){
       <div class="stat-card"><div class="num">${fmtMoney(pago)}</div><div class="label">Já pago este mês</div></div>
       <div class="stat-card"><div class="num">${fmtMoney(recebido)}</div><div class="label">Já recebido este mês</div></div>
       <div class="stat-card ${saldoMes>=0?'ok':'danger'}"><div class="num">${fmtMoney(saldoMes)}</div><div class="label">Saldo do mês (recebido − pago)</div></div>
+    </div>
+
+    <div class="panel" style="border-left:4px solid var(--danger); display:flex; gap:26px; flex-wrap:wrap; align-items:center;">
+      <div>
+        <div style="font-size:26px; font-weight:700; color:var(--danger);">${fmtMoney(totalDividas)}</div>
+        <div class="hint" style="margin:2px 0 0;">Total de dívidas em aberto (todos os meses, passado e futuro)</div>
+      </div>
+      <div style="border-left:1px solid var(--border); padding-left:26px;">
+        <div style="font-size:26px; font-weight:700; color:var(--ok);">${fmtMoney(totalAReceberGeral)}</div>
+        <div class="hint" style="margin:2px 0 0;">Total a receber em aberto (todos os meses)</div>
+      </div>
+    </div>
+
+    <div class="admin-section-title" style="font-size:12px; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:.04em; margin:22px 0 10px;">Painel por pessoa — ${nomeMesPt(mesAtual)}</div>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-bottom:22px;">
+      ${STATE.usuarios.map(u => painelPessoaHTML(u.nome, doMes)).join('')}
     </div>
 
     <div class="panel" style="border-left:4px solid var(--danger);">
@@ -420,6 +527,7 @@ function renderLancamentos(main){
                   <td style="font-size:12.5px; color:var(--ink-soft);">${l.criadoPor||'—'}</td>
                   <td style="white-space:nowrap;">
                     ${l.status==='pendente' ? `<button class="ghost-btn btnMarcarPago" data-id="${l.id}">Marcar ${l.tipo==='pagar'?'pago':'recebido'}</button>` : `<button class="ghost-btn btnReabrir" data-id="${l.id}">Reabrir</button>`}
+                    <button class="ghost-btn btnEditarLanc" data-id="${l.id}">Editar</button>
                     <button class="danger-btn btnExcluirLanc" data-id="${l.id}">Excluir</button>
                   </td>
                 </tr>
@@ -437,6 +545,9 @@ function renderLancamentos(main){
         await safeSet('fin:lancamentos', STATE.lancamentos);
         draw();
       };
+    });
+    box.querySelectorAll('.btnEditarLanc').forEach(btn => {
+      btn.onclick = () => abrirModalEditarLancamento(btn.dataset.id, draw);
     });
     box.querySelectorAll('.btnExcluirLanc').forEach(btn => {
       btn.onclick = async () => {
@@ -459,6 +570,59 @@ function renderLancamentos(main){
     draw();
   };
   draw();
+}
+
+// Modal pra editar um lançamento já existente.
+function abrirModalEditarLancamento(id, aoSalvar){
+  const l = STATE.lancamentos.find(x=>x.id===id);
+  if(!l) return;
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="modal">
+      <h3>Editar lançamento</h3>
+      <label class="field-label">Tipo</label>
+      <select id="editTipo" class="login-input">
+        <option value="pagar" ${l.tipo==='pagar'?'selected':''}>A pagar</option>
+        <option value="receber" ${l.tipo==='receber'?'selected':''}>A receber</option>
+      </select>
+      <label class="field-label">Descrição</label>
+      <input type="text" id="editDescricao" class="login-input" value="${l.descricao.replace(/"/g,'&quot;')}">
+      <label class="field-label">Valor (R$)</label>
+      <input type="number" id="editValor" class="login-input" step="0.01" min="0" value="${l.valor}">
+      <label class="field-label">Vencimento</label>
+      <input type="date" id="editVencimento" class="login-input" value="${l.vencimento}">
+      <label class="field-label">Categoria</label>
+      <select id="editCategoria" class="login-input">
+        ${STATE.categorias.map(c=>`<option value="${c}" ${c===l.categoria?'selected':''}>${c}</option>`).join('')}
+      </select>
+      <div id="msgEditarLanc"></div>
+      <div class="modal-actions" style="margin-top:10px;">
+        <button class="ghost-btn" id="cancelarEditar">Cancelar</button>
+        <button class="primary-btn" id="salvarEditar">Salvar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+  backdrop.onclick = (e) => { if(e.target===backdrop) backdrop.remove(); };
+  backdrop.querySelector('#cancelarEditar').onclick = () => backdrop.remove();
+  backdrop.querySelector('#salvarEditar').onclick = async () => {
+    const descricao = backdrop.querySelector('#editDescricao').value.trim();
+    const valor = Number(backdrop.querySelector('#editValor').value);
+    const vencimento = backdrop.querySelector('#editVencimento').value;
+    if(!descricao || !valor || valor<=0 || !vencimento){
+      backdrop.querySelector('#msgEditarLanc').innerHTML = `<div class="msg err">Preencha tudo certinho.</div>`;
+      return;
+    }
+    l.tipo = backdrop.querySelector('#editTipo').value;
+    l.descricao = descricao;
+    l.valor = valor;
+    l.vencimento = vencimento;
+    l.categoria = backdrop.querySelector('#editCategoria').value;
+    await safeSet('fin:lancamentos', STATE.lancamentos);
+    backdrop.remove();
+    if(aoSalvar) aoSalvar();
+  };
 }
 
 // ---------------- NOVA CONTA ----------------
@@ -499,10 +663,27 @@ function renderNovaConta(main){
           </select>
         </div>
       </div>
+      <div class="form-row">
+        <div style="flex:1;">
+          <label class="field-label">Repetição</label>
+          <select id="novoTipoRecorrencia">
+            <option value="nenhuma">Não repetir (lançamento único)</option>
+            <option value="ate-dezembro">Repetir todo mês até dezembro deste ano</option>
+            <option value="parcelado">Parcelado (ex: compra no cartão em Xx)</option>
+          </select>
+        </div>
+        <div id="campoParcelas" style="display:none;">
+          <label class="field-label">Quantidade de parcelas</label>
+          <input type="number" id="novaQtdParcelas" min="2" max="60" value="18" style="width:100px;">
+        </div>
+      </div>
       <button class="primary-btn" id="btnSalvarConta">Salvar conta</button>
       <div id="msgNovaConta"></div>
     </div>
   `;
+  document.getElementById('novoTipoRecorrencia').onchange = (e) => {
+    document.getElementById('campoParcelas').style.display = e.target.value==='parcelado' ? 'flex' : 'none';
+  };
   document.getElementById('btnSalvarConta').onclick = async () => {
     const msg = document.getElementById('msgNovaConta');
     const tipo = document.getElementById('novoTipo').value;
@@ -510,19 +691,40 @@ function renderNovaConta(main){
     const valor = Number(document.getElementById('novoValor').value);
     const vencimento = document.getElementById('novoVencimento').value;
     const categoria = document.getElementById('novaCategoria').value;
+    const tipoRecorrencia = document.getElementById('novoTipoRecorrencia').value;
     if(!descricao || !valor || valor<=0 || !vencimento){
       msg.innerHTML = `<div class="msg err">Preencha descrição, valor (maior que zero) e vencimento.</div>`;
       return;
     }
-    STATE.lancamentos.push({
-      id: genId(), tipo, descricao, valor, categoria, vencimento,
-      status: 'pendente', dataPagamento: null,
-      criadoPor: STATE.session.nome, criadoEm: todayStr(),
-    });
+    const [anoStr, mesStr, diaStr] = vencimento.split('-');
+    const ano0 = Number(anoStr), mes0 = Number(mesStr), dia0 = Number(diaStr);
+
+    let mesesParaCriar = 1;
+    if(tipoRecorrencia === 'ate-dezembro') mesesParaCriar = 13 - mes0; // até dezembro desse ano
+    else if(tipoRecorrencia === 'parcelado') mesesParaCriar = Math.max(2, Number(document.getElementById('novaQtdParcelas').value) || 2);
+
+    for(let i=0; i<mesesParaCriar; i++){
+      const totalMeses = ano0*12 + (mes0-1) + i; // conta em "meses desde o ano 0", pra rolar o ano certinho
+      const anoDoLancamento = Math.floor(totalMeses/12);
+      const mesDoLancamento = (totalMeses%12)+1;
+      const ultimoDiaDoMes = new Date(anoDoLancamento, mesDoLancamento, 0).getDate();
+      const diaAjustado = Math.min(dia0, ultimoDiaDoMes);
+      const vencimentoDoMes = `${anoDoLancamento}-${String(mesDoLancamento).padStart(2,'0')}-${String(diaAjustado).padStart(2,'0')}`;
+      const descricaoFinal = tipoRecorrencia==='parcelado' ? `${descricao} (${i+1}/${mesesParaCriar})` : descricao;
+      STATE.lancamentos.push({
+        id: genId(), tipo, descricao: descricaoFinal, valor, categoria, vencimento: vencimentoDoMes,
+        status: 'pendente', dataPagamento: null,
+        criadoPor: STATE.session.nome, criadoEm: todayStr(),
+      });
+    }
     await safeSet('fin:lancamentos', STATE.lancamentos);
-    msg.innerHTML = `<div class="msg ok">Conta lançada com sucesso!</div>`;
+    let avisoExtra = '';
+    if(tipoRecorrencia==='ate-dezembro') avisoExtra = '<br><span style="font-size:12.5px;">Lembrete: em janeiro, refaça o plano de contas pro novo ano.</span>';
+    msg.innerHTML = `<div class="msg ok">${mesesParaCriar>1 ? `${mesesParaCriar} conta(s) lançada(s).` : 'Conta lançada com sucesso!'}${avisoExtra}</div>`;
     document.getElementById('novaDescricao').value = '';
     document.getElementById('novoValor').value = '';
+    document.getElementById('novoTipoRecorrencia').value = 'nenhuma';
+    document.getElementById('campoParcelas').style.display = 'none';
   };
 }
 

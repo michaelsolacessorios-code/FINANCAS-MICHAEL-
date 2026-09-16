@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Finanças — Contas a Pagar e Receber</title>
+<title>Finanças — Contas Pessoais</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root{
@@ -21,7 +21,10 @@
   .nav-item:hover{background:rgba(255,255,255,.06); color:#fff;}
   .nav-item.active{background:var(--accent); color:#1C1400; font-weight:600;}
   .main{flex:1; padding:26px 32px; max-width:1180px;}
-  .topbar{display:flex; justify-content:flex-end; align-items:center; gap:10px; margin-bottom:18px;}
+  .topbar{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:18px; flex-wrap:wrap;}
+  .mes-nav{display:flex; align-items:center; gap:8px; background:#fff; border:1px solid var(--border); border-radius:30px; padding:5px 8px;}
+  .mes-nav button{border:none; background:none; cursor:pointer; font-size:17px; color:var(--primary); padding:0 7px; line-height:1;}
+  .mes-nav .mes-label{font-size:13.5px; font-weight:700; min-width:140px; text-align:center; text-transform:capitalize;}
   .whoami-avatar{width:34px; height:34px; border-radius:50%; object-fit:cover;}
   .whoami-avatar-fallback{display:flex; align-items:center; justify-content:center; background:var(--primary); color:#fff; font-weight:700; font-size:14px;}
   .topbar-user{display:flex; align-items:center; gap:10px; background:#fff; border:1px solid var(--border); border-radius:30px; padding:6px 8px 6px 6px;}
@@ -31,7 +34,7 @@
   .logout-btn:hover{border-color:var(--ink-faint); color:var(--ink);}
   .page-header{margin-bottom:18px;}
   .eyebrow{font-size:12px; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:.04em;}
-  h2{margin:2px 0 0; font-size:24px;}
+  h2{margin:2px 0 0; font-size:24px; text-transform:capitalize;}
   h3{margin:0 0 10px; font-size:16px;}
   .panel{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:20px; margin-bottom:18px;}
   .hint{font-size:13px; color:var(--ink-soft); margin:0 0 12px;}
@@ -45,8 +48,8 @@
   .form-row{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px; align-items:flex-end;}
   .form-row > div{display:flex; flex-direction:column; gap:4px;}
   .field-label{font-size:12px; color:var(--ink-soft); font-weight:600;}
-  input, select{padding:9px 11px; border:1px solid var(--border); border-radius:8px; font-size:14px; background:#fff; color:var(--ink); font-family:inherit;}
-  input:focus, select:focus{outline:2px solid var(--primary); outline-offset:1px;}
+  input, select, textarea{padding:9px 11px; border:1px solid var(--border); border-radius:8px; font-size:14px; background:#fff; color:var(--ink); font-family:inherit;}
+  input:focus, select:focus, textarea:focus{outline:2px solid var(--primary); outline-offset:1px;}
   .primary-btn{background:var(--primary); color:#fff; border:none; padding:10px 18px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;}
   .primary-btn:hover{background:var(--primary-dark);}
   .primary-btn:disabled{opacity:.5; cursor:default;}
@@ -61,9 +64,10 @@
   .badge.pendente{background:#FBF0DC; color:#8A5E17;}
   .badge.pago{background:#E2F0E8; color:var(--ok);}
   .badge.atrasado{background:#F7E2DC; color:var(--danger);}
-  .badge.pagar{background:#F7E2DC; color:var(--danger);}
-  .badge.receber{background:#E2F0E8; color:var(--ok);}
-  .empty-state{text-align:center; color:var(--ink-faint); padding:40px 0; font-size:14px;}
+  .badge.fixa{background:#E7EDF1; color:var(--primary);}
+  .badge.variavel{background:#F3EFE6; color:#8A5E17;}
+  .badge.plano{background:#EFE7F1; color:#6B3E7A;}
+  .empty-state{text-align:center; color:var(--ink-faint); padding:34px 0; font-size:14px;}
   .login-wrap{min-height:100vh; display:flex; align-items:center; justify-content:center; background:var(--primary-dark);}
   .login-card{background:#fff; border-radius:18px; padding:38px 34px; width:340px; box-shadow:0 20px 60px rgba(0,0,0,.3);}
   .login-card h1{font-size:20px; margin:0 0 4px;}
@@ -74,21 +78,27 @@
   .msg.ok{background:#E2F0E8; color:var(--ok);}
   .msg.err{background:#F7E2DC; color:var(--danger);}
   .toolbar{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; align-items:center;}
-  .search-input{flex:1; min-width:180px;}
-  .filter-select{min-width:140px;}
-  .modal-backdrop{position:fixed; inset:0; background:rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; z-index:100;}
-  .modal{background:#fff; border-radius:14px; padding:24px; width:380px; max-width:92vw;}
+  .modal-backdrop{position:fixed; inset:0; background:rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; z-index:100; padding:16px;}
+  .modal{background:#fff; border-radius:14px; padding:24px; width:400px; max-width:100%; max-height:90vh; overflow:auto;}
   .modal h3{margin-bottom:14px;}
-  .modal-actions{display:flex; justify-content:flex-end; gap:10px;}
+  .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:12px;}
   .chip{display:inline-flex; align-items:center; gap:6px; background:#F0EEE7; border-radius:20px; padding:5px 12px; font-size:13px; margin:0 6px 6px 0;}
   .chip button{background:none; border:none; color:var(--ink-faint); cursor:pointer; font-size:13px; padding:0;}
-  .loading{display:flex; align-items:center; justify-content:center; color:var(--ink-faint); font-size:14px;}
+  .loading{display:flex; align-items:center; justify-content:center; color:var(--ink-faint); font-size:14px; min-height:180px;}
+  .split{display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:16px;}
+  .linha-total{display:flex; justify-content:space-between; padding:7px 0; font-size:14px; border-bottom:1px solid var(--border);}
+  .linha-total:last-child{border-bottom:none;}
+  .linha-total.destaque{font-weight:700; font-size:16px; padding-top:11px;}
+  .secao-titulo{font-size:12px; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:.04em; margin:22px 0 10px;}
+  .aviso{background:#FBF0DC; border-left:4px solid var(--warn); border-radius:10px; padding:13px 16px; font-size:13.5px; margin-bottom:16px;}
   @media (max-width:720px){
     .shell{flex-direction:column;}
     .sidebar{width:100%; flex-direction:row; overflow-x:auto; padding:12px;}
     .sidebar .brand{display:none;}
     .nav-item{white-space:nowrap; border-radius:20px;}
     .main{padding:16px;}
+    table{font-size:12.5px;}
+    td,th{padding:7px 6px;}
   }
 </style>
 </head>
@@ -96,811 +106,881 @@
 <div id="app"></div>
 <script>
 const app = document.getElementById('app');
-const STATE = { session: null, usuarios: [], categorias: [], lancamentos: [], route: {page:'dashboard'} };
 
-// ---------------- ARMAZENAMENTO (via função no Vercel) ----------------
-async function safeGet(key){
-  try{
-    const res = await fetch(`/api/kv?key=${encodeURIComponent(key)}`);
-    if(!res.ok) throw new Error('falha ao buscar '+key);
-    const data = await res.json();
-    return data.value;
-  }catch(e){ console.error('safeGet', key, e); return null; }
-}
-async function safeSet(key, value){
-  try{
-    const res = await fetch('/api/kv', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({key, value}),
-    });
-    if(!res.ok) throw new Error('falha ao salvar '+key);
-    return true;
-  }catch(e){ console.error('safeSet', key, e); return false; }
-}
-async function hashSenha(senha){
-  const res = await fetch('/api/hash-senha', {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({senha}),
+const S = {
+  token: localStorage.getItem('fin_token') || null,
+  eu: null,
+  mes: new Date().toISOString().slice(0,7),
+  pagina: 'painel',
+  dados: null,
+};
+
+// =========================== API ===========================
+async function api(acao, dados = {}){
+  const res = await fetch('/api/data', {
+    method:'POST',
+    headers:{'Content-Type':'application/json', 'Authorization':'Bearer '+S.token},
+    body: JSON.stringify({acao, dados}),
   });
-  if(!res.ok) throw new Error('Não consegui criptografar a senha. Tente de novo.');
-  const data = await res.json();
-  return data.hash;
+  const json = await res.json().catch(()=>({error:'Resposta inválida do servidor.'}));
+  if(res.status === 401){ sair(); throw new Error('Sessão expirada.'); }
+  if(!res.ok) throw new Error(json.error || 'Erro no servidor.');
+  return json;
 }
 
-// ---------------- HELPERS ----------------
-function genId(){ return 'l'+Date.now()+'_'+Math.random().toString(36).slice(2,8); }
-function resizeImagemParaBase64(file, maxLado=200){
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error('Falha ao ler a imagem.'));
-    reader.onload = () => {
-      const img = new Image();
-      img.onerror = () => reject(new Error('Arquivo de imagem inválido.'));
-      img.onload = () => {
-        let {width, height} = img;
-        if(width > height){ if(width>maxLado){ height*=maxLado/width; width=maxLado; } }
-        else{ if(height>maxLado){ width*=maxLado/height; height=maxLado; } }
-        const canvas = document.createElement('canvas');
-        canvas.width = width; canvas.height = height;
-        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.85));
-      };
-      img.src = reader.result;
-    };
-    reader.readAsDataURL(file);
-  });
+// ========================= HELPERS =========================
+const money = v => (Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const hoje = () => new Date().toISOString().slice(0,10);
+const mesRef = m => `${m}-01`;
+function dataPt(iso){ if(!iso) return '—'; const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; }
+function nomeMes(m){
+  const [a,mm]=m.split('-');
+  const n=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  return `${n[Number(mm)-1]} de ${a}`;
 }
-function todayStr(){ return new Date().toISOString().slice(0,10); }
-function currentMonthKey(){ return new Date().toISOString().slice(0,7); }
-function fmtMoney(v){ return (v||0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'}); }
-function fmtDatePt(iso){
-  if(!iso) return '—';
-  const [y,m,d] = iso.split('-');
-  return `${d}/${m}/${y}`;
+function somaMes(m, delta){
+  const [a,mm]=m.split('-').map(Number);
+  const t=a*12+(mm-1)+delta;
+  return `${Math.floor(t/12)}-${String((t%12)+1).padStart(2,'0')}`;
 }
-function diasParaVencer(iso){
-  const hoje = new Date(todayStr()+'T00:00:00');
-  const venc = new Date(iso+'T00:00:00');
-  return Math.round((venc-hoje)/(1000*60*60*24));
+// data padrão dentro do mês que está aberto, sem estourar (ex: 31 em fevereiro)
+function dataNoMes(m){
+  const [a,mm]=m.split('-').map(Number);
+  const ultimo=new Date(a,mm,0).getDate();
+  const dia=Math.min(Number(hoje().slice(8,10)), ultimo);
+  return `${m}-${String(dia).padStart(2,'0')}`;
 }
-function nomeMesPt(mesChave){
-  const [ano, mes] = mesChave.split('-');
-  const nomes = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
-  return `${nomes[Number(mes)-1]} de ${ano}`;
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const soma = (arr, f) => arr.reduce((s,x)=>s+Number(f?f(x):x.valor||0),0);
+const meus = arr => arr.filter(x=>x.user_id===S.eu.id);
+const dela = arr => S.eu.parceiro_id ? arr.filter(x=>x.user_id===S.eu.parceiro_id) : [];
+
+function nomeDe(id){
+  const u = (S.dados.usuarios||[]).find(u=>u.id===id);
+  return u ? u.nome : '—';
 }
-function confirmarAcao(msg){
-  return new Promise(resolve => {
-    const backdrop = document.createElement('div');
-    backdrop.className = 'modal-backdrop';
-    backdrop.innerHTML = `
-      <div class="modal">
-        <h3>Confirmar</h3>
-        <p style="font-size:14px; color:var(--ink-soft);">${msg}</p>
-        <div class="modal-actions">
-          <button class="ghost-btn" id="cancelarConf">Cancelar</button>
-          <button class="primary-btn" id="confirmarConf">Confirmar</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(backdrop);
-    backdrop.querySelector('#cancelarConf').onclick = () => { backdrop.remove(); resolve(false); };
-    backdrop.querySelector('#confirmarConf').onclick = () => { backdrop.remove(); resolve(true); };
+
+function confirmar(msg){
+  return new Promise(r=>{
+    const b=document.createElement('div'); b.className='modal-backdrop';
+    b.innerHTML=`<div class="modal"><h3>Confirmar</h3><p style="font-size:14px;color:var(--ink-soft);">${esc(msg)}</p>
+      <div class="modal-actions"><button class="ghost-btn" id="c1">Cancelar</button><button class="primary-btn" id="c2">Confirmar</button></div></div>`;
+    document.body.appendChild(b);
+    b.querySelector('#c1').onclick=()=>{b.remove();r(false);};
+    b.querySelector('#c2').onclick=()=>{b.remove();r(true);};
   });
 }
 
-async function loadAll(){
-  STATE.usuarios = (await safeGet('fin:usuarios')) || [];
-  STATE.categorias = (await safeGet('fin:categorias')) || [];
-  STATE.lancamentos = (await safeGet('fin:lancamentos')) || [];
-
-  // Migração única: cria o primeiro usuário admin, se ainda não existir ninguém.
-  if(STATE.usuarios.length === 0){
-    const hash = await hashSenha('michael123');
-    STATE.usuarios = [{nome:'Michael', usuario:'michael', senha:hash, admin:true}];
-    await safeSet('fin:usuarios', STATE.usuarios);
-  }
-  if(STATE.categorias.length === 0){
-    STATE.categorias = ['Moradia','Alimentação','Transporte','Saúde','Educação','Lazer','Salário','Outros'];
-    await safeSet('fin:categorias', STATE.categorias);
-  }
-}
-
-function render(){
-  if(!STATE.session){ renderLogin(); return; }
-  renderShell();
-}
-
-// ---------------- LOGIN ----------------
-function renderLogin(){
-  app.innerHTML = `
-    <div class="login-wrap">
-      <div class="login-card">
-        <h1>💰 Finanças</h1>
-        <p>Entre com seu usuário e senha.</p>
-        <div id="loginErrorSlot"></div>
-        <input type="text" id="loginUser" class="login-input" placeholder="Usuário" autocomplete="username">
-        <input type="password" id="loginPass" class="login-input" placeholder="Senha" autocomplete="current-password">
-        <button class="primary-btn" id="loginSubmitBtn" style="width:100%;">Entrar</button>
-      </div>
-    </div>
-  `;
-  const submit = () => doLogin();
-  document.getElementById('loginSubmitBtn').onclick = submit;
-  document.getElementById('loginPass').onkeydown = (e) => { if(e.key==='Enter') submit(); };
-
-  async function doLogin(){
-    const errSlot = document.getElementById('loginErrorSlot');
-    const btn = document.getElementById('loginSubmitBtn');
-    const user = document.getElementById('loginUser').value.trim().toLowerCase();
-    const pass = document.getElementById('loginPass').value.trim();
-    if(!user || !pass){ errSlot.innerHTML = `<div class="login-error">Preencha usuário e senha.</div>`; return; }
-    btn.disabled = true; btn.textContent = 'Entrando...';
+function modal(titulo, corpoHTML, aoSalvar, textoBotao='Salvar'){
+  const b=document.createElement('div'); b.className='modal-backdrop';
+  b.innerHTML=`<div class="modal"><h3>${esc(titulo)}</h3>${corpoHTML}<div id="modalMsg"></div>
+    <div class="modal-actions"><button class="ghost-btn" id="mCancel">Cancelar</button>
+    <button class="primary-btn" id="mOk">${esc(textoBotao)}</button></div></div>`;
+  document.body.appendChild(b);
+  b.onclick=e=>{ if(e.target===b) b.remove(); };
+  b.querySelector('#mCancel').onclick=()=>b.remove();
+  b.querySelector('#mOk').onclick=async()=>{
+    const btn=b.querySelector('#mOk');
+    btn.disabled=true; btn.textContent='Salvando...';
     try{
-      const res = await fetch('/api/login', {
-        method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({usuario:user, senha:pass}),
-      });
-      const data = await res.json();
-      if(!res.ok) throw new Error(data.error || 'Falha ao entrar.');
-      if(!data.ok){ errSlot.innerHTML = `<div class="login-error">${data.message || 'Usuário ou senha incorretos.'}</div>`; return; }
-      STATE.session = {nome:data.nome, usuario:data.usuario, admin:data.admin};
-      STATE.route = {page:'dashboard'};
-      await loadAll();
-      const meuUsuario = STATE.usuarios.find(u=>u.usuario===data.usuario);
-      STATE.session.foto = meuUsuario ? meuUsuario.foto || null : null;
-      render();
+      const ok = await aoSalvar(b);
+      if(ok!==false){ b.remove(); await carregar(); }
+      else { btn.disabled=false; btn.textContent=textoBotao; }
     }catch(err){
-      errSlot.innerHTML = `<div class="login-error">Erro ao entrar: ${err.message}</div>`;
-    }finally{
-      btn.disabled = false; btn.textContent = 'Entrar';
+      b.querySelector('#modalMsg').innerHTML=`<div class="msg err">${esc(err.message)}</div>`;
+      btn.disabled=false; btn.textContent=textoBotao;
     }
+  };
+  return b;
+}
+
+function imagemBase64(file, maxLado=200){
+  return new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    r.onerror=()=>reject(new Error('Falha ao ler a imagem.'));
+    r.onload=()=>{
+      const img=new Image();
+      img.onerror=()=>reject(new Error('Imagem inválida.'));
+      img.onload=()=>{
+        let {width:w,height:h}=img;
+        if(w>h){ if(w>maxLado){h*=maxLado/w;w=maxLado;} } else { if(h>maxLado){w*=maxLado/h;h=maxLado;} }
+        const c=document.createElement('canvas'); c.width=w; c.height=h;
+        c.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(c.toDataURL('image/jpeg',0.85));
+      };
+      img.src=r.result;
+    };
+    r.readAsDataURL(file);
+  });
+}
+
+// ========================== LOGIN ==========================
+function telaLogin(){
+  app.innerHTML=`
+    <div class="login-wrap"><div class="login-card">
+      <h1>💰 Finanças</h1>
+      <p>Entre com seu usuário e senha.</p>
+      <div id="loginErro"></div>
+      <input type="text" id="lu" class="login-input" placeholder="Usuário" autocomplete="username">
+      <input type="password" id="lp" class="login-input" placeholder="Senha" autocomplete="current-password">
+      <button class="primary-btn" id="lb" style="width:100%;">Entrar</button>
+    </div></div>`;
+  const entrar=async()=>{
+    const erro=document.getElementById('loginErro'), btn=document.getElementById('lb');
+    const usuario=document.getElementById('lu').value.trim(), senha=document.getElementById('lp').value.trim();
+    if(!usuario||!senha){ erro.innerHTML=`<div class="login-error">Preencha usuário e senha.</div>`; return; }
+    btn.disabled=true; btn.textContent='Entrando...';
+    try{
+      const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({usuario,senha})});
+      const data=await res.json();
+      if(!res.ok) throw new Error(data.error||'Falha ao entrar.');
+      if(!data.ok){ erro.innerHTML=`<div class="login-error">${esc(data.message||'Usuário ou senha incorretos.')}</div>`; return; }
+      S.token=data.token; localStorage.setItem('fin_token',data.token);
+      S.eu=data.usuario; S.pagina='painel';
+      await carregar();
+    }catch(e){
+      erro.innerHTML=`<div class="login-error">${esc(e.message)}</div>`;
+    }finally{ btn.disabled=false; btn.textContent='Entrar'; }
+  };
+  document.getElementById('lb').onclick=entrar;
+  document.getElementById('lp').onkeydown=e=>{ if(e.key==='Enter') entrar(); };
+}
+
+function sair(){
+  S.token=null; S.eu=null; S.dados=null;
+  localStorage.removeItem('fin_token');
+  telaLogin();
+}
+
+// ========================== SHELL ==========================
+async function carregar(){
+  try{
+    const r = await api('mes',{mes:S.mes});
+    S.eu = r.eu; S.dados = r;
+    desenhar();
+  }catch(e){
+    if(S.token) app.innerHTML=`<div style="padding:40px;"><div class="msg err">${esc(e.message)}</div>
+      <button class="ghost-btn" style="margin-top:14px;" onclick="location.reload()">Tentar de novo</button></div>`;
   }
 }
 
-// ---------------- SHELL / NAV ----------------
-function sidebarHTML(items){
-  return `
+function desenhar(){
+  const itens=[
+    {p:'painel',t:'Painel'},
+    {p:'mes',t:'Painel do mês'},
+    {p:'entradas',t:'Entradas'},
+    {p:'saidas',t:'Saídas'},
+    {p:'planos',t:'Planos'},
+    {p:'relatorios',t:'Relatórios'},
+    {p:'categorias',t:'Categorias'},
+    {p:'perfil',t:'Meu perfil'},
+  ];
+  if(S.eu.admin) itens.push({p:'usuarios',t:'Usuários'});
+
+  app.innerHTML=`<div class="shell">
     <div class="sidebar">
       <div class="brand"><span class="dot"></span> Finanças</div>
-      ${items.map(it => `<div class="nav-item ${STATE.route.page===it.page?'active':''}" data-page="${it.page}">${it.label}</div>`).join('')}
+      ${itens.map(i=>`<div class="nav-item ${S.pagina===i.p?'active':''}" data-p="${i.p}">${i.t}</div>`).join('')}
     </div>
-  `;
-}
-function topbarHTML(){
-  return `
-    <div class="topbar">
-      <div class="topbar-user">
-        ${STATE.session.foto ? `<img class="whoami-avatar" src="${STATE.session.foto}" alt="${STATE.session.nome}">` : `<div class="whoami-avatar whoami-avatar-fallback">${STATE.session.nome[0].toUpperCase()}</div>`}
-        <div class="whoami">Conectado como<b>${STATE.session.nome}</b></div>
-        <button class="logout-btn" id="btn-logout">Sair</button>
-      </div>
-    </div>
-  `;
-}
-function bindNav(){
-  document.querySelectorAll('.nav-item').forEach(el => {
-    el.onclick = () => { STATE.route = {page: el.dataset.page}; renderShell(); };
-  });
-  document.getElementById('btn-logout').onclick = () => { STATE.session = null; render(); };
-}
-
-async function renderShell(){
-  const items = [
-    {page:'dashboard', label:'Painel'},
-    {page:'lancamentos', label:'Lançamentos'},
-    {page:'nova-conta', label:'+ Nova conta'},
-    {page:'relatorios', label:'Relatórios'},
-    {page:'categorias', label:'Categorias'},
-    {page:'perfil', label:'Meu perfil'},
-  ];
-  if(STATE.session.admin) items.push({page:'usuarios', label:'Usuários'});
-
-  app.innerHTML = `<div class="shell">${sidebarHTML(items)}<div class="main"><div id="topbarSlot"></div><div id="mainContent"></div></div></div>`;
-  document.getElementById('topbarSlot').innerHTML = topbarHTML();
-  bindNav();
-
-  const main = document.getElementById('mainContent');
-  main.innerHTML = `<div class="loading" style="min-height:200px;">Carregando…</div>`;
-
-  if(STATE.route.page==='dashboard') renderDashboard(main);
-  else if(STATE.route.page==='lancamentos') renderLancamentos(main);
-  else if(STATE.route.page==='nova-conta') renderNovaConta(main);
-  else if(STATE.route.page==='relatorios') renderRelatorios(main);
-  else if(STATE.route.page==='categorias') renderCategorias(main);
-  else if(STATE.route.page==='perfil') renderMeuPerfil(main);
-  else if(STATE.route.page==='usuarios' && STATE.session.admin) renderUsuarios(main);
-  else renderDashboard(main);
-}
-
-// Monta o quadro de resumo do mês de UMA pessoa específica (filtra pelo "criadoPor").
-function painelPessoaHTML(nomePessoa, doMes){
-  const usuarioPessoa = STATE.usuarios.find(u=>u.nome===nomePessoa);
-  const foto = usuarioPessoa && usuarioPessoa.foto;
-  const dela = doMes.filter(l => l.criadoPor === nomePessoa);
-  const aPagar = dela.filter(l => l.tipo==='pagar' && l.status==='pendente').reduce((s,l)=>s+l.valor,0);
-  const aReceber = dela.filter(l => l.tipo==='receber' && l.status==='pendente').reduce((s,l)=>s+l.valor,0);
-  const pago = dela.filter(l => l.tipo==='pagar' && l.status==='pago').reduce((s,l)=>s+l.valor,0);
-  const recebido = dela.filter(l => l.tipo==='receber' && l.status==='pago').reduce((s,l)=>s+l.valor,0);
-  const saldo = recebido - pago;
-  return `
-    <div class="panel">
-      <h3 style="display:flex; align-items:center; gap:8px;">
-        ${foto ? `<img src="${foto}" alt="${nomePessoa}" style="width:26px; height:26px; border-radius:50%; object-fit:cover;">` : '👤'}
-        ${nomePessoa}
-      </h3>
-      <table>
-        <tbody>
-          <tr><td class="hint">A pagar</td><td style="text-align:right; color:var(--danger); font-weight:600;">${fmtMoney(aPagar)}</td></tr>
-          <tr><td class="hint">A receber</td><td style="text-align:right; color:var(--ok); font-weight:600;">${fmtMoney(aReceber)}</td></tr>
-          <tr><td class="hint">Já pago</td><td style="text-align:right;">${fmtMoney(pago)}</td></tr>
-          <tr><td class="hint">Já recebido</td><td style="text-align:right;">${fmtMoney(recebido)}</td></tr>
-          <tr><td class="hint"><b>Saldo do mês</b></td><td style="text-align:right; font-weight:700; color:${saldo>=0?'var(--ok)':'var(--danger)'};">${fmtMoney(saldo)}</td></tr>
-        </tbody>
-      </table>
-    </div>
-  `;
-}
-
-// ---------------- MEU PERFIL ----------------
-function renderMeuPerfil(main){
-  const eu = STATE.usuarios.find(u=>u.usuario===STATE.session.usuario);
-  main.innerHTML = `
-    <div class="page-header"><div class="eyebrow">Meu perfil</div><h2>Sua foto</h2></div>
-    <div class="panel" style="max-width:420px;">
-      <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
-        ${eu && eu.foto ? `<img src="${eu.foto}" alt="${STATE.session.nome}" style="width:70px; height:70px; border-radius:50%; object-fit:cover;">` : `<div class="whoami-avatar whoami-avatar-fallback" style="width:70px; height:70px; font-size:26px;">${STATE.session.nome[0].toUpperCase()}</div>`}
-        <div>
-          <div style="font-weight:700; font-size:16px;">${STATE.session.nome}</div>
-          <div class="hint" style="margin:2px 0 0;">Essa foto aparece no topo e no seu painel.</div>
+    <div class="main">
+      <div class="topbar">
+        <div class="mes-nav">
+          <button id="mesAnt">‹</button>
+          <span class="mes-label">${nomeMes(S.mes)}</span>
+          <button id="mesProx">›</button>
+        </div>
+        <div class="topbar-user">
+          ${S.eu.foto?`<img class="whoami-avatar" src="${S.eu.foto}" alt="">`:`<div class="whoami-avatar whoami-avatar-fallback">${esc(S.eu.nome[0].toUpperCase())}</div>`}
+          <div class="whoami">Conectado como<b>${esc(S.eu.nome)}</b></div>
+          <button class="logout-btn" id="btnSair">Sair</button>
         </div>
       </div>
-      <input type="file" id="f_foto_perfil" accept="image/*">
-      <div id="msgPerfil"></div>
-    </div>
-  `;
-  document.getElementById('f_foto_perfil').onchange = async () => {
-    const file = document.getElementById('f_foto_perfil').files[0];
-    if(!file) return;
-    const msg = document.getElementById('msgPerfil');
-    try{
-      const base64 = await resizeImagemParaBase64(file);
-      eu.foto = base64;
-      STATE.session.foto = base64;
-      await safeSet('fin:usuarios', STATE.usuarios);
-      msg.innerHTML = `<div class="msg ok">Foto atualizada!</div>`;
-      renderShell();
-    }catch(err){
-      msg.innerHTML = `<div class="msg err">Não consegui processar essa imagem.</div>`;
-    }
-  };
+      <div id="conteudo"></div>
+    </div></div>`;
+
+  document.querySelectorAll('.nav-item').forEach(el=>{
+    el.onclick=()=>{ S.pagina=el.dataset.p; desenhar(); };
+  });
+  document.getElementById('btnSair').onclick=sair;
+  document.getElementById('mesAnt').onclick=async()=>{ S.mes=somaMes(S.mes,-1); await carregar(); };
+  document.getElementById('mesProx').onclick=async()=>{ S.mes=somaMes(S.mes,1); await carregar(); };
+
+  const c=document.getElementById('conteudo');
+  ({painel:pgPainel, mes:pgMes, entradas:pgEntradas, saidas:pgSaidas, planos:pgPlanos,
+    relatorios:pgRelatorios, categorias:pgCategorias, perfil:pgPerfil, usuarios:pgUsuarios}[S.pagina]||pgPainel)(c);
 }
 
-// ---------------- DASHBOARD ----------------
-function renderDashboard(main){
-  const mesAtual = currentMonthKey();
-  const doMes = STATE.lancamentos.filter(l => l.vencimento.slice(0,7) === mesAtual);
-  const aPagar = doMes.filter(l => l.tipo==='pagar' && l.status==='pendente').reduce((s,l)=>s+l.valor,0);
-  const aReceber = doMes.filter(l => l.tipo==='receber' && l.status==='pendente').reduce((s,l)=>s+l.valor,0);
-  const pago = doMes.filter(l => l.tipo==='pagar' && l.status==='pago').reduce((s,l)=>s+l.valor,0);
-  const recebido = doMes.filter(l => l.tipo==='receber' && l.status==='pago').reduce((s,l)=>s+l.valor,0);
-  const saldoMes = recebido - pago;
+// ===================== 01 — PAINEL =========================
+function resumoDe(lista_entradas, lista_saidas){
+  const fixas = soma(lista_saidas.filter(s=>s.conta_fixa_id));
+  const variaveis = soma(lista_saidas.filter(s=>!s.conta_fixa_id));
+  const entradas = soma(lista_entradas);
+  const pago = soma(lista_saidas.filter(s=>s.pago));
+  const aPagar = soma(lista_saidas.filter(s=>!s.pago));
+  return {fixas, variaveis, despesas:fixas+variaveis, entradas, pago, aPagar, disponivel:entradas-(fixas+variaveis)};
+}
 
-  const hoje = todayStr();
-  const pendentes = STATE.lancamentos.filter(l => l.status==='pendente');
-  const atrasadas = pendentes.filter(l => l.vencimento < hoje).sort((a,b)=>a.vencimento<b.vencimento?-1:1);
-  const vencendoSemana = pendentes.filter(l => l.vencimento >= hoje && diasParaVencer(l.vencimento) <= 7).sort((a,b)=>a.vencimento<b.vencimento?-1:1);
+function blocoResumo(titulo, r){
+  return `<div class="panel">
+    <h3>${esc(titulo)}</h3>
+    <div class="linha-total"><span>Contas fixas</span><b>${money(r.fixas)}</b></div>
+    <div class="linha-total"><span>Contas variáveis</span><b>${money(r.variaveis)}</b></div>
+    <div class="linha-total"><span>Total despesas</span><b style="color:var(--danger);">${money(r.despesas)}</b></div>
+    <div class="linha-total"><span>Entrada</span><b style="color:var(--ok);">${money(r.entradas)}</b></div>
+    <div class="linha-total destaque"><span>Disponível</span>
+      <b style="color:${r.disponivel>=0?'var(--ok)':'var(--danger)'};">${money(r.disponivel)}</b></div>
+  </div>`;
+}
 
-  const totalDividas = pendentes.filter(l => l.tipo==='pagar').reduce((s,l)=>s+l.valor,0);
-  const totalAReceberGeral = pendentes.filter(l => l.tipo==='receber').reduce((s,l)=>s+l.valor,0);
+function pgPainel(c){
+  const D=S.dados;
+  const rMeu = resumoDe(meus(D.entradas), meus(D.saidas));
+  const temParceiro = !!S.eu.parceiro_id;
+  const rDela = temParceiro ? resumoDe(dela(D.entradas), dela(D.saidas)) : null;
+  const rTotal = temParceiro ? resumoDe(D.entradas, D.saidas) : null;
 
-  main.innerHTML = `
-    <div class="page-header"><div class="eyebrow">Painel</div><h2>Resumo de ${nomeMesPt(mesAtual)}</h2></div>
+  const pendentes = (D.planos||[]).filter(p=>p.status==='pendente');
+  const avisoPlanos = pendentes.length ? `<div class="aviso">
+    <b>⏳ ${pendentes.length} plano(s) pendente(s) pra iniciar:</b><br>
+    ${pendentes.map(p=>`${esc(p.nome)} — ${money(p.valor_total)} a partir de ${dataPt(p.data_inicio)}`).join('<br>')}
+  </div>` : '';
+
+  c.innerHTML=`
+    <div class="page-header"><div class="eyebrow">Painel</div><h2>${nomeMes(S.mes)}</h2></div>
+    ${avisoPlanos}
     <div class="stat-grid">
-      <div class="stat-card danger"><div class="num">${fmtMoney(aPagar)}</div><div class="label">A pagar este mês</div></div>
-      <div class="stat-card ok"><div class="num">${fmtMoney(aReceber)}</div><div class="label">A receber este mês</div></div>
-      <div class="stat-card"><div class="num">${fmtMoney(pago)}</div><div class="label">Já pago este mês</div></div>
-      <div class="stat-card"><div class="num">${fmtMoney(recebido)}</div><div class="label">Já recebido este mês</div></div>
-      <div class="stat-card ${saldoMes>=0?'ok':'danger'}"><div class="num">${fmtMoney(saldoMes)}</div><div class="label">Saldo do mês (recebido − pago)</div></div>
+      <div class="stat-card ok"><div class="num">${money(rMeu.pago)}</div><div class="label">Total pago no mês</div></div>
+      <div class="stat-card danger"><div class="num">${money(rMeu.aPagar)}</div><div class="label">Ainda a pagar no mês</div></div>
+      <div class="stat-card"><div class="num">${money(rMeu.entradas)}</div><div class="label">Entradas do mês</div></div>
+      <div class="stat-card ${rMeu.disponivel>=0?'ok':'danger'}">
+        <div class="num" style="color:${rMeu.disponivel>=0?'var(--ok)':'var(--danger)'};">${money(rMeu.disponivel)}</div>
+        <div class="label">Saldo final ${rMeu.disponivel>=0?'(positivo)':'(negativo)'}</div></div>
     </div>
-
-    <div class="panel" style="border-left:4px solid var(--danger); display:flex; gap:26px; flex-wrap:wrap; align-items:center;">
-      <div>
-        <div style="font-size:26px; font-weight:700; color:var(--danger);">${fmtMoney(totalDividas)}</div>
-        <div class="hint" style="margin:2px 0 0;">Total de dívidas em aberto (todos os meses, passado e futuro)</div>
-      </div>
-      <div style="border-left:1px solid var(--border); padding-left:26px;">
-        <div style="font-size:26px; font-weight:700; color:var(--ok);">${fmtMoney(totalAReceberGeral)}</div>
-        <div class="hint" style="margin:2px 0 0;">Total a receber em aberto (todos os meses)</div>
-      </div>
-    </div>
-
-    <div class="admin-section-title" style="font-size:12px; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:.04em; margin:22px 0 10px;">Painel por pessoa — ${nomeMesPt(mesAtual)}</div>
-    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-bottom:22px;">
-      ${STATE.usuarios.map(u => painelPessoaHTML(u.nome, doMes)).join('')}
-    </div>
-
-    <div class="panel" style="border-left:4px solid var(--danger);">
-      <h3>⚠️ Atrasadas (${atrasadas.length})</h3>
-      ${atrasadas.length===0 ? `<p class="hint" style="margin:0;">Nenhuma conta atrasada. 🎉</p>` : `
-        <table>
-          <thead><tr><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Venceu</th><th>Valor</th><th></th></tr></thead>
-          <tbody>${atrasadas.map(l => linhaLancamentoResumo(l)).join('')}</tbody>
-        </table>
-      `}
-    </div>
-
-    <div class="panel" style="border-left:4px solid var(--warn);">
-      <h3>🔔 Vencendo nos próximos 7 dias (${vencendoSemana.length})</h3>
-      ${vencendoSemana.length===0 ? `<p class="hint" style="margin:0;">Nada vencendo essa semana.</p>` : `
-        <table>
-          <thead><tr><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Vence</th><th>Valor</th><th></th></tr></thead>
-          <tbody>${vencendoSemana.map(l => linhaLancamentoResumo(l)).join('')}</tbody>
-        </table>
-      `}
-    </div>
-  `;
-  bindMarcarPago(main);
+    <div class="split">
+      ${blocoResumo(temParceiro?`Meu — ${S.eu.nome}`:'Resumo do mês', rMeu)}
+      ${temParceiro?blocoResumo(nomeDe(S.eu.parceiro_id), rDela):''}
+      ${temParceiro?blocoResumo('Casal (somado)', rTotal):''}
+    </div>`;
 }
 
-function linhaLancamentoResumo(l){
-  return `
-    <tr>
-      <td>${l.descricao}</td>
-      <td>${l.categoria}</td>
-      <td><span class="badge ${l.tipo}">${l.tipo==='pagar'?'A pagar':'A receber'}</span></td>
-      <td>${fmtDatePt(l.vencimento)}</td>
-      <td>${fmtMoney(l.valor)}</td>
-      <td><button class="ghost-btn btnMarcarPago" data-id="${l.id}">Marcar ${l.tipo==='pagar'?'pago':'recebido'}</button></td>
-    </tr>
-  `;
+// ================= 02 — PAINEL DO MÊS ======================
+function linhaSaida(s, editavel){
+  const atrasada = !s.pago && s.data < hoje();
+  const tag = s.plano_id ? '<span class="badge plano">Plano</span>'
+            : s.conta_fixa_id ? '<span class="badge fixa">Fixa</span>'
+            : '<span class="badge variavel">Variável</span>';
+  return `<tr>
+    <td>${esc(s.nome)} ${tag}</td>
+    <td>${esc(s.categoria||'—')}</td>
+    <td>${dataPt(s.data)}</td>
+    <td><b>${money(s.valor)}</b></td>
+    <td><span class="badge ${s.pago?'pago':(atrasada?'atrasado':'pendente')}">${s.pago?'Pago':(atrasada?'Atrasado':'Pendente')}</span></td>
+    ${editavel?`<td style="white-space:nowrap;">
+      <button class="ghost-btn btnPagar" data-id="${s.id}" data-pago="${s.pago?1:0}">${s.pago?'Desmarcar':'Pago'}</button>
+      <button class="ghost-btn btnEdSaida" data-id="${s.id}">Editar</button>
+      <button class="danger-btn btnDelSaida" data-id="${s.id}" data-grupo="${s.grupo_id||''}">Excluir</button>
+    </td>`:`<td style="font-size:12.5px;color:var(--ink-soft);">${esc(nomeDe(s.user_id))}</td>`}
+  </tr>`;
 }
-function bindMarcarPago(main){
-  main.querySelectorAll('.btnMarcarPago').forEach(btn => {
-    btn.onclick = async () => {
-      const l = STATE.lancamentos.find(x=>x.id===btn.dataset.id);
-      l.status = 'pago';
-      l.dataPagamento = todayStr();
-      await safeSet('fin:lancamentos', STATE.lancamentos);
-      renderShell();
-    };
+
+function tabelaSaidas(lista, editavel){
+  if(!lista.length) return `<div class="empty-state">Nada aqui.</div>`;
+  return `<table><thead><tr><th>Conta</th><th>Categoria</th><th>Vence</th><th>Valor</th><th>Status</th>
+    <th>${editavel?'':'De quem'}</th></tr></thead>
+    <tbody>${lista.map(s=>linhaSaida(s,editavel)).join('')}</tbody></table>`;
+}
+
+function pgMes(c){
+  const D=S.dados;
+  const minhas = meus(D.saidas).sort((a,b)=>a.data<b.data?-1:1);
+  const q1 = minhas.filter(s=>Number(s.data.slice(8,10))<=15);
+  const q2 = minhas.filter(s=>Number(s.data.slice(8,10))>15);
+  const t1 = soma(q1), t2 = soma(q2);
+  const entrada05 = soma(meus(D.entradas).filter(e=>Number(e.data.slice(8,10))<=15));
+
+  const futuras = (D.futuras||[]);
+  const porMes = {};
+  futuras.forEach(f=>{ (porMes[f.mes_ref.slice(0,7)] = porMes[f.mes_ref.slice(0,7)]||[]).push(f); });
+
+  c.innerHTML=`
+    <div class="page-header"><div class="eyebrow">Painel do mês</div><h2>${nomeMes(S.mes)}</h2></div>
+    <div class="aviso">Referência de recebimento: <b>dia 05</b> — você tem ${money(entrada05)} entrando até o dia 15.</div>
+
+    <div class="panel">
+      <h3>Vencem do dia 01 ao 15 — ${money(t1)}</h3>
+      ${tabelaSaidas(q1,true)}
+    </div>
+    <div class="panel">
+      <h3>Vencem do dia 16 ao fim do mês — ${money(t2)}</h3>
+      ${tabelaSaidas(q2,true)}
+    </div>
+
+    <div class="secao-titulo">Contas futuras (parceladas e planos — fixas não entram, são infinitas)</div>
+    ${Object.keys(porMes).length===0?`<div class="panel"><div class="empty-state">Nenhuma conta futura lançada.</div></div>`:
+      Object.keys(porMes).sort().map(m=>`<div class="panel">
+        <h3>${nomeMes(m)} — ${money(soma(porMes[m]))}</h3>
+        ${tabelaSaidas(porMes[m],false)}
+      </div>`).join('')}
+  `;
+  ligarBotoesSaida(c);
+}
+
+function ligarBotoesSaida(c){
+  c.querySelectorAll('.btnPagar').forEach(b=>b.onclick=async()=>{
+    b.disabled=true;
+    await api('saida.pago',{id:b.dataset.id, pago: b.dataset.pago!=='1'});
+    await carregar();
+  });
+  c.querySelectorAll('.btnDelSaida').forEach(b=>b.onclick=async()=>{
+    const grupo=b.dataset.grupo;
+    let grupoTodo=false;
+    if(grupo){
+      grupoTodo = await confirmar('Essa conta é parcelada. Excluir TODAS as parcelas? (Cancelar = exclui só essa)');
+    } else {
+      if(!(await confirmar('Excluir essa conta?'))) return;
+    }
+    await api('saida.excluir',{id:b.dataset.id, grupo_id:grupo, grupoTodo});
+    await carregar();
+  });
+  c.querySelectorAll('.btnEdSaida').forEach(b=>b.onclick=()=>{
+    const s=S.dados.saidas.find(x=>x.id===b.dataset.id);
+    modal('Editar conta', `
+      <label class="field-label">Nome</label>
+      <input class="login-input" id="eNome" value="${esc(s.nome)}">
+      <label class="field-label">Categoria</label>
+      <select class="login-input" id="eCat">${opcoesCategoria(s.categoria)}</select>
+      <label class="field-label">Valor (R$)</label>
+      <input class="login-input" id="eValor" type="number" step="0.01" value="${s.valor}">
+      <label class="field-label">Data</label>
+      <input class="login-input" id="eData" type="date" value="${s.data}">
+      ${s.conta_fixa_id?`<p class="hint" style="margin-top:6px;">Conta fixa: o valor alterado vale deste mês em diante.</p>`:''}
+    `, async b2=>{
+      await api('saida.salvar',{
+        id:s.id, nome:b2.querySelector('#eNome').value.trim(),
+        categoria:b2.querySelector('#eCat').value,
+        valor:b2.querySelector('#eValor').value, data:b2.querySelector('#eData').value,
+      });
+    });
   });
 }
 
-// ---------------- LANÇAMENTOS ----------------
-function renderLancamentos(main){
-  main.innerHTML = `
-    <div class="page-header"><div class="eyebrow">Lançamentos</div><h2>Todas as contas</h2></div>
-    <div class="toolbar">
-      <input type="text" class="search-input" id="buscaLanc" placeholder="Buscar por descrição...">
-      <select class="filter-select" id="filtroTipo">
-        <option value="">Todos os tipos</option>
-        <option value="pagar">A pagar</option>
-        <option value="receber">A receber</option>
-      </select>
-      <select class="filter-select" id="filtroStatus">
-        <option value="">Todos os status</option>
-        <option value="pendente">Pendente</option>
-        <option value="pago">Pago/Recebido</option>
-      </select>
-      <select class="filter-select" id="filtroCategoria">
-        <option value="">Todas as categorias</option>
-        ${STATE.categorias.map(c=>`<option value="${c}">${c}</option>`).join('')}
-      </select>
-      <input type="month" id="filtroMes" value="${currentMonthKey()}">
-      <button class="ghost-btn" id="btnLimparMes">Ver todos os meses</button>
-    </div>
-    <div id="listaLancamentos"></div>
-  `;
-  let filtroMesAtivo = true;
-
-  function draw(){
-    const busca = document.getElementById('buscaLanc').value.trim().toLowerCase();
-    const tipo = document.getElementById('filtroTipo').value;
-    const status = document.getElementById('filtroStatus').value;
-    const categoria = document.getElementById('filtroCategoria').value;
-    const mes = document.getElementById('filtroMes').value;
-    let lista = STATE.lancamentos.slice();
-    if(busca) lista = lista.filter(l => l.descricao.toLowerCase().includes(busca));
-    if(tipo) lista = lista.filter(l => l.tipo===tipo);
-    if(status) lista = lista.filter(l => l.status===status);
-    if(categoria) lista = lista.filter(l => l.categoria===categoria);
-    if(filtroMesAtivo && mes) lista = lista.filter(l => l.vencimento.slice(0,7)===mes);
-    lista.sort((a,b) => a.vencimento<b.vencimento?-1:1);
-
-    const box = document.getElementById('listaLancamentos');
-    if(lista.length===0){ box.innerHTML = `<div class="empty-state">Nenhum lançamento encontrado.</div>`; return; }
-    box.innerHTML = `
-      <div class="panel">
-        <table>
-          <thead><tr><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Lançado por</th><th></th></tr></thead>
-          <tbody>
-            ${lista.map(l => {
-              const atrasado = l.status==='pendente' && l.vencimento < todayStr();
-              return `
-                <tr>
-                  <td>${l.descricao}</td>
-                  <td>${l.categoria}</td>
-                  <td><span class="badge ${l.tipo}">${l.tipo==='pagar'?'A pagar':'A receber'}</span></td>
-                  <td>${fmtDatePt(l.vencimento)}</td>
-                  <td>${fmtMoney(l.valor)}</td>
-                  <td><span class="badge ${atrasado?'atrasado':l.status}">${atrasado?'Atrasado':(l.status==='pago'?(l.tipo==='pagar'?'Pago':'Recebido'):'Pendente')}</span></td>
-                  <td style="font-size:12.5px; color:var(--ink-soft);">${l.criadoPor||'—'}</td>
-                  <td style="white-space:nowrap;">
-                    ${l.status==='pendente' ? `<button class="ghost-btn btnMarcarPago" data-id="${l.id}">Marcar ${l.tipo==='pagar'?'pago':'recebido'}</button>` : `<button class="ghost-btn btnReabrir" data-id="${l.id}">Reabrir</button>`}
-                    <button class="ghost-btn btnEditarLanc" data-id="${l.id}">Editar</button>
-                    <button class="danger-btn btnExcluirLanc" data-id="${l.id}">Excluir</button>
-                  </td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>
-    `;
-    bindMarcarPago(box);
-    box.querySelectorAll('.btnReabrir').forEach(btn => {
-      btn.onclick = async () => {
-        const l = STATE.lancamentos.find(x=>x.id===btn.dataset.id);
-        l.status = 'pendente'; l.dataPagamento = null;
-        await safeSet('fin:lancamentos', STATE.lancamentos);
-        draw();
-      };
-    });
-    box.querySelectorAll('.btnEditarLanc').forEach(btn => {
-      btn.onclick = () => abrirModalEditarLancamento(btn.dataset.id, draw);
-    });
-    box.querySelectorAll('.btnExcluirLanc').forEach(btn => {
-      btn.onclick = async () => {
-        if(!(await confirmarAcao('Excluir esse lançamento? Essa ação não pode ser desfeita.'))) return;
-        STATE.lancamentos = STATE.lancamentos.filter(x=>x.id!==btn.dataset.id);
-        await safeSet('fin:lancamentos', STATE.lancamentos);
-        draw();
-      };
-    });
-  }
-
-  document.getElementById('buscaLanc').oninput = draw;
-  document.getElementById('filtroTipo').onchange = draw;
-  document.getElementById('filtroStatus').onchange = draw;
-  document.getElementById('filtroCategoria').onchange = draw;
-  document.getElementById('filtroMes').onchange = draw;
-  document.getElementById('btnLimparMes').onclick = () => {
-    filtroMesAtivo = !filtroMesAtivo;
-    document.getElementById('btnLimparMes').textContent = filtroMesAtivo ? 'Ver todos os meses' : 'Filtrar só esse mês';
-    draw();
-  };
-  draw();
+function opcoesCategoria(sel){
+  return (S.dados.categorias||[]).map(c=>`<option value="${esc(c.nome)}" ${c.nome===sel?'selected':''}>${esc(c.nome)}</option>`).join('');
 }
 
-// Modal pra editar um lançamento já existente.
-function abrirModalEditarLancamento(id, aoSalvar){
-  const l = STATE.lancamentos.find(x=>x.id===id);
-  if(!l) return;
-  const backdrop = document.createElement('div');
-  backdrop.className = 'modal-backdrop';
-  backdrop.innerHTML = `
-    <div class="modal">
-      <h3>Editar lançamento</h3>
-      <label class="field-label">Tipo</label>
-      <select id="editTipo" class="login-input">
-        <option value="pagar" ${l.tipo==='pagar'?'selected':''}>A pagar</option>
-        <option value="receber" ${l.tipo==='receber'?'selected':''}>A receber</option>
-      </select>
-      <label class="field-label">Descrição</label>
-      <input type="text" id="editDescricao" class="login-input" value="${l.descricao.replace(/"/g,'&quot;')}">
-      <label class="field-label">Valor (R$)</label>
-      <input type="number" id="editValor" class="login-input" step="0.01" min="0" value="${l.valor}">
-      <label class="field-label">Vencimento</label>
-      <input type="date" id="editVencimento" class="login-input" value="${l.vencimento}">
-      <label class="field-label">Categoria</label>
-      <select id="editCategoria" class="login-input">
-        ${STATE.categorias.map(c=>`<option value="${c}" ${c===l.categoria?'selected':''}>${c}</option>`).join('')}
-      </select>
-      <div id="msgEditarLanc"></div>
-      <div class="modal-actions" style="margin-top:10px;">
-        <button class="ghost-btn" id="cancelarEditar">Cancelar</button>
-        <button class="primary-btn" id="salvarEditar">Salvar</button>
+// ===================== 03 — ENTRADAS =======================
+function pgEntradas(c){
+  const D=S.dados;
+  const minhas=meus(D.entradas).sort((a,b)=>a.data<b.data?-1:1);
+  const fixas=D.entradasFixas||[];
+  const total=soma(minhas);
+
+  c.innerHTML=`
+    <div class="page-header"><div class="eyebrow">Entradas</div><h2>${nomeMes(S.mes)}</h2></div>
+
+    <div class="stat-grid">
+      <div class="stat-card ok"><div class="num">${money(total)}</div><div class="label">Receita total do mês</div></div>
+    </div>
+
+    <div class="panel">
+      <h3>Entradas que se repetem (salário, vale)</h3>
+      <p class="hint">O valor é editável. Se mudar, os próximos meses já nascem com o valor novo.</p>
+      ${fixas.length?`<table><thead><tr><th>Descrição</th><th>Tipo</th><th>Dia</th><th>Valor atual</th><th></th></tr></thead>
+        <tbody>${fixas.map(f=>`<tr>
+          <td>${esc(f.descricao)}</td><td>${esc(f.tipo)}</td><td>${f.dia}</td><td><b>${money(f.valor_atual)}</b></td>
+          <td style="white-space:nowrap;">
+            <button class="ghost-btn btnEdEF" data-id="${f.id}">Editar</button>
+            <button class="danger-btn btnDelEF" data-id="${f.id}">Excluir</button></td>
+        </tr>`).join('')}</tbody></table>`:`<div class="empty-state">Nenhuma entrada fixa cadastrada.</div>`}
+      <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="primary-btn" id="btnNovaEF">+ Entrada fixa</button>
+        <button class="ghost-btn" id="btnSalarioRapido">Criar Salário (dia 05)</button>
+        <button class="ghost-btn" id="btnValeRapido">Criar Vale (dia 15)</button>
       </div>
     </div>
-  `;
-  document.body.appendChild(backdrop);
-  backdrop.onclick = (e) => { if(e.target===backdrop) backdrop.remove(); };
-  backdrop.querySelector('#cancelarEditar').onclick = () => backdrop.remove();
-  backdrop.querySelector('#salvarEditar').onclick = async () => {
-    const descricao = backdrop.querySelector('#editDescricao').value.trim();
-    const valor = Number(backdrop.querySelector('#editValor').value);
-    const vencimento = backdrop.querySelector('#editVencimento').value;
-    if(!descricao || !valor || valor<=0 || !vencimento){
-      backdrop.querySelector('#msgEditarLanc').innerHTML = `<div class="msg err">Preencha tudo certinho.</div>`;
-      return;
-    }
-    l.tipo = backdrop.querySelector('#editTipo').value;
-    l.descricao = descricao;
-    l.valor = valor;
-    l.vencimento = vencimento;
-    l.categoria = backdrop.querySelector('#editCategoria').value;
-    await safeSet('fin:lancamentos', STATE.lancamentos);
-    backdrop.remove();
-    if(aoSalvar) aoSalvar();
+
+    <div class="panel">
+      <h3>Entradas deste mês</h3>
+      ${minhas.length?`<table><thead><tr><th>Descrição</th><th>Tipo</th><th>Data</th><th>Valor</th><th></th></tr></thead>
+        <tbody>${minhas.map(e=>`<tr>
+          <td>${esc(e.descricao)}</td><td>${esc(e.tipo)}</td><td>${dataPt(e.data)}</td><td><b>${money(e.valor)}</b></td>
+          <td style="white-space:nowrap;">
+            <button class="ghost-btn btnEdE" data-id="${e.id}">Editar</button>
+            <button class="danger-btn btnDelE" data-id="${e.id}">Excluir</button></td>
+        </tr>`).join('')}</tbody></table>`:`<div class="empty-state">Nenhuma entrada neste mês.</div>`}
+      <div style="margin-top:12px;"><button class="primary-btn" id="btnNovaE">+ Renda extra / Outros</button></div>
+    </div>`;
+
+  const formEF = (f={}) => `
+    <label class="field-label">Tipo</label>
+    <select class="login-input" id="fTipo">
+      ${['salario','vale','renda_extra','outros'].map(t=>`<option value="${t}" ${f.tipo===t?'selected':''}>${t}</option>`).join('')}
+    </select>
+    <label class="field-label">Descrição</label>
+    <input class="login-input" id="fDesc" value="${esc(f.descricao||'')}" placeholder="Ex: Salário">
+    <label class="field-label">Valor (R$)</label>
+    <input class="login-input" id="fValor" type="number" step="0.01" value="${f.valor_atual||''}">
+    <label class="field-label">Dia do mês</label>
+    <input class="login-input" id="fDia" type="number" min="1" max="31" value="${f.dia||5}">`;
+
+  document.getElementById('btnNovaEF').onclick=()=>modal('Nova entrada fixa', formEF(), async b=>{
+    await api('entradaFixa.salvar',{
+      tipo:b.querySelector('#fTipo').value, descricao:b.querySelector('#fDesc').value.trim(),
+      valor:b.querySelector('#fValor').value, dia:b.querySelector('#fDia').value, mes:S.mes,
+    });
+  });
+  document.getElementById('btnSalarioRapido').onclick=async()=>{
+    await api('entradaFixa.salvar',{tipo:'salario',descricao:'Salário',valor:0,dia:5,mes:S.mes}); await carregar();
   };
-}
-
-// ---------------- NOVA CONTA ----------------
-function renderNovaConta(main){
-  main.innerHTML = `
-    <div class="page-header"><div class="eyebrow">Nova conta</div><h2>Lançar conta a pagar ou receber</h2></div>
-    <div class="panel" style="max-width:520px;">
-      <div class="form-row">
-        <div style="flex:1;">
-          <label class="field-label">Tipo</label>
-          <select id="novoTipo">
-            <option value="pagar">A pagar</option>
-            <option value="receber">A receber</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-row">
-        <div style="flex:1;">
-          <label class="field-label">Descrição</label>
-          <input type="text" id="novaDescricao" placeholder="Ex: Aluguel, Cliente Fulano...">
-        </div>
-      </div>
-      <div class="form-row">
-        <div style="flex:1;">
-          <label class="field-label">Valor (R$)</label>
-          <input type="number" id="novoValor" step="0.01" min="0" placeholder="0,00">
-        </div>
-        <div style="flex:1;">
-          <label class="field-label">Vencimento</label>
-          <input type="date" id="novoVencimento" value="${todayStr()}">
-        </div>
-      </div>
-      <div class="form-row">
-        <div style="flex:1;">
-          <label class="field-label">Categoria</label>
-          <select id="novaCategoria">
-            ${STATE.categorias.map(c=>`<option value="${c}">${c}</option>`).join('')}
-          </select>
-        </div>
-      </div>
-      <div class="form-row">
-        <div style="flex:1;">
-          <label class="field-label">Repetição</label>
-          <select id="novoTipoRecorrencia">
-            <option value="nenhuma">Não repetir (lançamento único)</option>
-            <option value="ate-dezembro">Repetir todo mês até dezembro deste ano</option>
-            <option value="parcelado">Parcelado (ex: compra no cartão em Xx)</option>
-          </select>
-        </div>
-        <div id="campoParcelas" style="display:none;">
-          <label class="field-label">Quantidade de parcelas</label>
-          <input type="number" id="novaQtdParcelas" min="2" max="60" value="18" style="width:100px;">
-        </div>
-      </div>
-      <button class="primary-btn" id="btnSalvarConta">Salvar conta</button>
-      <div id="msgNovaConta"></div>
-    </div>
-  `;
-  document.getElementById('novoTipoRecorrencia').onchange = (e) => {
-    document.getElementById('campoParcelas').style.display = e.target.value==='parcelado' ? 'flex' : 'none';
+  document.getElementById('btnValeRapido').onclick=async()=>{
+    await api('entradaFixa.salvar',{tipo:'vale',descricao:'Vale',valor:0,dia:15,mes:S.mes}); await carregar();
   };
-  document.getElementById('btnSalvarConta').onclick = async () => {
-    const msg = document.getElementById('msgNovaConta');
-    const tipo = document.getElementById('novoTipo').value;
-    const descricao = document.getElementById('novaDescricao').value.trim();
-    const valor = Number(document.getElementById('novoValor').value);
-    const vencimento = document.getElementById('novoVencimento').value;
-    const categoria = document.getElementById('novaCategoria').value;
-    const tipoRecorrencia = document.getElementById('novoTipoRecorrencia').value;
-    if(!descricao || !valor || valor<=0 || !vencimento){
-      msg.innerHTML = `<div class="msg err">Preencha descrição, valor (maior que zero) e vencimento.</div>`;
-      return;
-    }
-    const [anoStr, mesStr, diaStr] = vencimento.split('-');
-    const ano0 = Number(anoStr), mes0 = Number(mesStr), dia0 = Number(diaStr);
-
-    let mesesParaCriar = 1;
-    if(tipoRecorrencia === 'ate-dezembro') mesesParaCriar = 13 - mes0; // até dezembro desse ano
-    else if(tipoRecorrencia === 'parcelado') mesesParaCriar = Math.max(2, Number(document.getElementById('novaQtdParcelas').value) || 2);
-
-    for(let i=0; i<mesesParaCriar; i++){
-      const totalMeses = ano0*12 + (mes0-1) + i; // conta em "meses desde o ano 0", pra rolar o ano certinho
-      const anoDoLancamento = Math.floor(totalMeses/12);
-      const mesDoLancamento = (totalMeses%12)+1;
-      const ultimoDiaDoMes = new Date(anoDoLancamento, mesDoLancamento, 0).getDate();
-      const diaAjustado = Math.min(dia0, ultimoDiaDoMes);
-      const vencimentoDoMes = `${anoDoLancamento}-${String(mesDoLancamento).padStart(2,'0')}-${String(diaAjustado).padStart(2,'0')}`;
-      const descricaoFinal = tipoRecorrencia==='parcelado' ? `${descricao} (${i+1}/${mesesParaCriar})` : descricao;
-      STATE.lancamentos.push({
-        id: genId(), tipo, descricao: descricaoFinal, valor, categoria, vencimento: vencimentoDoMes,
-        status: 'pendente', dataPagamento: null,
-        criadoPor: STATE.session.nome, criadoEm: todayStr(),
+  c.querySelectorAll('.btnEdEF').forEach(b=>b.onclick=()=>{
+    const f=fixas.find(x=>x.id===b.dataset.id);
+    modal('Editar entrada fixa', formEF(f), async b2=>{
+      await api('entradaFixa.salvar',{
+        id:f.id, tipo:b2.querySelector('#fTipo').value, descricao:b2.querySelector('#fDesc').value.trim(),
+        valor:b2.querySelector('#fValor').value, dia:b2.querySelector('#fDia').value, mes:S.mes,
       });
-    }
-    await safeSet('fin:lancamentos', STATE.lancamentos);
-    let avisoExtra = '';
-    if(tipoRecorrencia==='ate-dezembro') avisoExtra = '<br><span style="font-size:12.5px;">Lembrete: em janeiro, refaça o plano de contas pro novo ano.</span>';
-    msg.innerHTML = `<div class="msg ok">${mesesParaCriar>1 ? `${mesesParaCriar} conta(s) lançada(s).` : 'Conta lançada com sucesso!'}${avisoExtra}</div>`;
-    document.getElementById('novaDescricao').value = '';
-    document.getElementById('novoValor').value = '';
-    document.getElementById('novoTipoRecorrencia').value = 'nenhuma';
-    document.getElementById('campoParcelas').style.display = 'none';
-  };
+    });
+  });
+  c.querySelectorAll('.btnDelEF').forEach(b=>b.onclick=async()=>{
+    if(!(await confirmar('Excluir essa entrada fixa? As linhas já lançadas nos meses também somem.'))) return;
+    await api('entradaFixa.excluir',{id:b.dataset.id}); await carregar();
+  });
+
+  const formE = (e={}) => `
+    <label class="field-label">Tipo</label>
+    <select class="login-input" id="eTipo">
+      ${['renda_extra','outros','salario','vale'].map(t=>`<option value="${t}" ${e.tipo===t?'selected':''}>${t}</option>`).join('')}
+    </select>
+    <label class="field-label">Descrição</label>
+    <input class="login-input" id="eDesc" value="${esc(e.descricao||'')}">
+    <label class="field-label">Valor (R$)</label>
+    <input class="login-input" id="eValor" type="number" step="0.01" value="${e.valor||''}">
+    <label class="field-label">Data</label>
+    <input class="login-input" id="eData" type="date" value="${e.data||dataNoMes(S.mes)}">`;
+
+  document.getElementById('btnNovaE').onclick=()=>modal('Nova entrada', formE(), async b=>{
+    await api('entrada.salvar',{
+      tipo:b.querySelector('#eTipo').value, descricao:b.querySelector('#eDesc').value.trim(),
+      valor:b.querySelector('#eValor').value, data:b.querySelector('#eData').value,
+    });
+  });
+  c.querySelectorAll('.btnEdE').forEach(b=>b.onclick=()=>{
+    const e=minhas.find(x=>x.id===b.dataset.id);
+    modal('Editar entrada', formE(e), async b2=>{
+      await api('entrada.salvar',{
+        id:e.id, tipo:b2.querySelector('#eTipo').value, descricao:b2.querySelector('#eDesc').value.trim(),
+        valor:b2.querySelector('#eValor').value, data:b2.querySelector('#eData').value,
+      });
+    });
+  });
+  c.querySelectorAll('.btnDelE').forEach(b=>b.onclick=async()=>{
+    if(!(await confirmar('Excluir essa entrada?'))) return;
+    await api('entrada.excluir',{id:b.dataset.id}); await carregar();
+  });
 }
 
-// ---------------- RELATÓRIOS ----------------
-function renderRelatorios(main){
-  const mesAtual = currentMonthKey();
-  main.innerHTML = `
-    <div class="page-header"><div class="eyebrow">Relatórios</div><h2>Visão geral</h2></div>
-    <div class="panel">
-      <label class="field-label">Mês de referência (gráfico por categoria)</label>
-      <input type="month" id="mesRelatorio" value="${mesAtual}" style="max-width:180px;">
-    </div>
-    <div class="panel">
-      <h3>Gastos por categoria</h3>
-      <canvas id="graficoCategorias" height="90"></canvas>
-    </div>
-    <div class="panel">
-      <h3>Evolução — últimos 6 meses (pago vs recebido)</h3>
-      <canvas id="graficoEvolucao" height="90"></canvas>
-    </div>
-  `;
-  let chartCat, chartEvo;
-  function desenharGraficoCategoria(){
-    const mes = document.getElementById('mesRelatorio').value;
-    const doMes = STATE.lancamentos.filter(l => l.vencimento.slice(0,7)===mes && l.tipo==='pagar');
-    const porCategoria = {};
-    doMes.forEach(l => { porCategoria[l.categoria] = (porCategoria[l.categoria]||0) + l.valor; });
-    const labels = Object.keys(porCategoria);
-    const valores = Object.values(porCategoria);
-    if(chartCat) chartCat.destroy();
-    chartCat = new Chart(document.getElementById('graficoCategorias'), {
-      type: 'bar',
-      data: { labels, datasets: [{ label:'Valor gasto', data: valores, backgroundColor:'#1B3A4B' }] },
-      options: { plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:v=>fmtMoney(v)}}} }
-    });
-  }
-  function desenharGraficoEvolucao(){
-    const meses = [];
-    const d = new Date();
-    for(let i=5;i>=0;i--){
-      const dt = new Date(d.getFullYear(), d.getMonth()-i, 1);
-      meses.push(dt.toISOString().slice(0,7));
-    }
-    const pagoPorMes = meses.map(m => STATE.lancamentos.filter(l=>l.tipo==='pagar' && l.status==='pago' && l.vencimento.slice(0,7)===m).reduce((s,l)=>s+l.valor,0));
-    const recebidoPorMes = meses.map(m => STATE.lancamentos.filter(l=>l.tipo==='receber' && l.status==='pago' && l.vencimento.slice(0,7)===m).reduce((s,l)=>s+l.valor,0));
-    if(chartEvo) chartEvo.destroy();
-    chartEvo = new Chart(document.getElementById('graficoEvolucao'), {
-      type: 'line',
-      data: {
-        labels: meses.map(nomeMesPt),
-        datasets: [
-          { label:'Pago', data: pagoPorMes, borderColor:'#B5482F', backgroundColor:'#B5482F', tension:.3 },
-          { label:'Recebido', data: recebidoPorMes, borderColor:'#2F7D5A', backgroundColor:'#2F7D5A', tension:.3 },
-        ]
-      },
-      options: { scales:{y:{ticks:{callback:v=>fmtMoney(v)}}} }
-    });
-  }
-  document.getElementById('mesRelatorio').onchange = desenharGraficoCategoria;
-  desenharGraficoCategoria();
-  desenharGraficoEvolucao();
-}
+// ====================== 04 — SAÍDAS ========================
+function pgSaidas(c){
+  const D=S.dados;
+  const minhas=meus(D.saidas).sort((a,b)=>a.data<b.data?-1:1);
+  const fixas=D.contasFixas||[];
 
-// ---------------- CATEGORIAS ----------------
-function renderCategorias(main){
-  main.innerHTML = `
-    <div class="page-header"><div class="eyebrow">Categorias</div><h2>Gerenciar categorias</h2></div>
+  c.innerHTML=`
+    <div class="page-header"><div class="eyebrow">Saídas</div><h2>${nomeMes(S.mes)}</h2></div>
+
     <div class="panel">
-      <div class="form-row">
-        <input type="text" id="novaCategoriaInput" placeholder="Nome da nova categoria">
-        <button class="primary-btn" id="btnAddCategoria">Adicionar</button>
+      <h3>Contas fixas (repetem todo mês, pra sempre)</h3>
+      <p class="hint">O valor é editável mês a mês. Mudou a luz? Edite no Painel do mês que os próximos já vêm com o valor novo.</p>
+      ${fixas.length?`<table><thead><tr><th>Nome</th><th>Categoria</th><th>Dia</th><th>Valor atual</th><th>Ativa</th><th></th></tr></thead>
+        <tbody>${fixas.map(f=>`<tr>
+          <td>${esc(f.nome)}</td><td>${esc(f.categoria||'—')}</td><td>${f.dia_vencimento}</td>
+          <td><b>${money(f.valor_atual)}</b></td><td>${f.ativa?'Sim':'Não'}</td>
+          <td style="white-space:nowrap;">
+            <button class="ghost-btn btnEdCF" data-id="${f.id}">Editar</button>
+            <button class="danger-btn btnDelCF" data-id="${f.id}">Excluir</button></td>
+        </tr>`).join('')}</tbody></table>`:`<div class="empty-state">Nenhuma conta fixa cadastrada.</div>`}
+      <div style="margin-top:12px;"><button class="primary-btn" id="btnNovaCF">+ Conta fixa</button></div>
+    </div>
+
+    <div class="panel">
+      <h3>Todas as saídas de ${nomeMes(S.mes)} — ${money(soma(minhas))}</h3>
+      ${tabelaSaidas(minhas,true)}
+      <div style="margin-top:12px;"><button class="primary-btn" id="btnNovaSaida">+ Nova despesa</button></div>
+    </div>`;
+
+  ligarBotoesSaida(c);
+
+  const formCF = (f={}) => `
+    <label class="field-label">Nome</label>
+    <input class="login-input" id="cNome" value="${esc(f.nome||'')}" placeholder="Ex: Aluguel">
+    <label class="field-label">Categoria</label>
+    <select class="login-input" id="cCat">${opcoesCategoria(f.categoria)}</select>
+    <label class="field-label">Valor (R$)</label>
+    <input class="login-input" id="cValor" type="number" step="0.01" value="${f.valor_atual||''}">
+    <label class="field-label">Dia do vencimento</label>
+    <input class="login-input" id="cDia" type="number" min="1" max="31" value="${f.dia_vencimento||5}">
+    <label style="display:flex;align-items:center;gap:8px;font-size:14px;margin-top:6px;">
+      <input type="checkbox" id="cAtiva" ${f.ativa===false?'':'checked'} style="width:auto;"> Ativa
+    </label>`;
+
+  document.getElementById('btnNovaCF').onclick=()=>modal('Nova conta fixa', formCF(), async b=>{
+    await api('contaFixa.salvar',{
+      nome:b.querySelector('#cNome').value.trim(), categoria:b.querySelector('#cCat').value,
+      valor:b.querySelector('#cValor').value, dia:b.querySelector('#cDia').value,
+      ativa:b.querySelector('#cAtiva').checked, mes:S.mes,
+    });
+  });
+  c.querySelectorAll('.btnEdCF').forEach(b=>b.onclick=()=>{
+    const f=fixas.find(x=>x.id===b.dataset.id);
+    modal('Editar conta fixa', formCF(f), async b2=>{
+      await api('contaFixa.salvar',{
+        id:f.id, nome:b2.querySelector('#cNome').value.trim(), categoria:b2.querySelector('#cCat').value,
+        valor:b2.querySelector('#cValor').value, dia:b2.querySelector('#cDia').value,
+        ativa:b2.querySelector('#cAtiva').checked, mes:S.mes,
+      });
+    });
+  });
+  c.querySelectorAll('.btnDelCF').forEach(b=>b.onclick=async()=>{
+    if(!(await confirmar('Excluir essa conta fixa? Todas as linhas dela nos meses também somem.'))) return;
+    await api('contaFixa.excluir',{id:b.dataset.id}); await carregar();
+  });
+
+  document.getElementById('btnNovaSaida').onclick=()=>{
+    const b = modal('Nova despesa', `
+      <label class="field-label">Nome</label>
+      <input class="login-input" id="sNome" placeholder="Ex: Mercado">
+      <label class="field-label">Categoria</label>
+      <select class="login-input" id="sCat">${opcoesCategoria()}</select>
+      <label class="field-label">Valor total (R$)</label>
+      <input class="login-input" id="sValor" type="number" step="0.01" placeholder="0,00">
+      <label class="field-label">Data</label>
+      <input class="login-input" id="sData" type="date" value="${dataNoMes(S.mes)}">
+      <label style="display:flex;align-items:center;gap:8px;font-size:14px;margin:8px 0;">
+        <input type="checkbox" id="sFixa" style="width:auto;"> É conta fixa (repete todo mês, pra sempre)
+      </label>
+      <div id="blocoParcelas">
+        <label class="field-label">Parcelado em quantas vezes? (1 = à vista)</label>
+        <input class="login-input" id="sParcelas" type="number" min="1" max="60" value="1">
+        <p class="hint" style="margin:0;">O valor total é dividido igualmente entre os meses.</p>
       </div>
-      <div id="listaCategorias"></div>
-    </div>
-  `;
-  function draw(){
-    document.getElementById('listaCategorias').innerHTML = STATE.categorias.map(c => `
-      <span class="chip">${c} <button class="btnRemoverCategoria" data-nome="${c}">✕</button></span>
-    `).join('');
-    document.querySelectorAll('.btnRemoverCategoria').forEach(btn => {
-      btn.onclick = async () => {
-        const emUso = STATE.lancamentos.some(l => l.categoria === btn.dataset.nome);
-        if(emUso && !(await confirmarAcao(`A categoria "${btn.dataset.nome}" está em uso em algum lançamento. Remover mesmo assim?`))) return;
-        STATE.categorias = STATE.categorias.filter(c => c !== btn.dataset.nome);
-        await safeSet('fin:categorias', STATE.categorias);
-        draw();
-      };
+    `, async b2=>{
+      const ehFixa=b2.querySelector('#sFixa').checked;
+      const nome=b2.querySelector('#sNome').value.trim();
+      const valor=b2.querySelector('#sValor').value;
+      const data=b2.querySelector('#sData').value;
+      if(!nome || !Number(valor) || !data) throw new Error('Preencha nome, valor e data.');
+      if(ehFixa){
+        await api('contaFixa.salvar',{
+          nome, categoria:b2.querySelector('#sCat').value, valor,
+          dia:Number(data.slice(8,10)), mes:S.mes,
+        });
+      } else {
+        await api('saida.salvar',{
+          nome, categoria:b2.querySelector('#sCat').value, valor, data,
+          parcelas:b2.querySelector('#sParcelas').value,
+        });
+      }
     });
-  }
-  document.getElementById('btnAddCategoria').onclick = async () => {
-    const input = document.getElementById('novaCategoriaInput');
-    const nome = input.value.trim();
-    if(!nome) return;
-    if(STATE.categorias.includes(nome)){ input.value=''; return; }
-    STATE.categorias.push(nome);
-    await safeSet('fin:categorias', STATE.categorias);
-    input.value = '';
-    draw();
+    b.querySelector('#sFixa').onchange=e=>{
+      b.querySelector('#blocoParcelas').style.display = e.target.checked?'none':'block';
+    };
   };
-  draw();
 }
 
-// ---------------- USUÁRIOS (admin) ----------------
-function renderUsuarios(main){
-  main.innerHTML = `
+// ====================== 05 — PLANOS ========================
+function pgPlanos(c){
+  const planos=S.dados.planos||[];
+  const grupo = st => planos.filter(p=>p.status===st);
+  const tabela = lista => lista.length?`<table><thead><tr><th>Nome</th><th>Resumo</th><th>Valor</th><th>Pagamento</th><th>Início</th><th></th></tr></thead>
+    <tbody>${lista.map(p=>`<tr>
+      <td><b>${esc(p.nome)}</b></td>
+      <td style="font-size:12.5px;color:var(--ink-soft);">${esc(p.resumo||'—')}</td>
+      <td>${money(p.valor_total)}</td>
+      <td>${p.forma_pagamento==='avista'?'À vista':`${p.parcelas}x de ${money(p.valor_total/p.parcelas)}`}</td>
+      <td>${dataPt(p.data_inicio)}</td>
+      <td style="white-space:nowrap;">
+        ${p.status==='pendente'?`<button class="ghost-btn btnAdiar" data-id="${p.id}">Adiar</button>
+        <button class="ghost-btn btnEdP" data-id="${p.id}">Editar</button>`:''}
+        ${p.status==='ativo'?`<button class="ghost-btn btnConcluir" data-id="${p.id}">Concluir</button>`:''}
+        <button class="danger-btn btnDelP" data-id="${p.id}">Excluir</button>
+      </td></tr>`).join('')}</tbody></table>`:`<div class="empty-state">Nenhum plano aqui.</div>`;
+
+  c.innerHTML=`
+    <div class="page-header"><div class="eyebrow">Planos</div><h2>Meus planos</h2></div>
+    <p class="hint">Na data de início o plano entra sozinho nas suas contas — à vista vira uma despesa, parcelado vira uma despesa por mês.</p>
+    <div class="panel"><h3>⏳ Pendentes (ainda não começaram)</h3>${tabela(grupo('pendente'))}
+      <div style="margin-top:12px;"><button class="primary-btn" id="btnNovoP">+ Novo plano</button></div></div>
+    <div class="panel"><h3>▶️ Ativos (já entraram nas contas)</h3>${tabela(grupo('ativo'))}</div>
+    <div class="panel"><h3>✅ Concluídos</h3>${tabela(grupo('concluido'))}</div>`;
+
+  const formP = (p={}) => `
+    <label class="field-label">Nome</label>
+    <input class="login-input" id="pNome" value="${esc(p.nome||'')}" placeholder="Ex: Trocar o carro">
+    <label class="field-label">Resumo</label>
+    <textarea class="login-input" id="pResumo" rows="2">${esc(p.resumo||'')}</textarea>
+    <label class="field-label">Valor total (R$)</label>
+    <input class="login-input" id="pValor" type="number" step="0.01" value="${p.valor_total||''}">
+    <label class="field-label">Pagamento</label>
+    <select class="login-input" id="pForma">
+      <option value="avista" ${p.forma_pagamento==='avista'?'selected':''}>À vista</option>
+      <option value="parcelado" ${p.forma_pagamento==='parcelado'?'selected':''}>Parcelado</option>
+    </select>
+    <div id="pBlocoParc" style="display:${p.forma_pagamento==='parcelado'?'block':'none'};">
+      <label class="field-label">Quantas vezes?</label>
+      <input class="login-input" id="pParcelas" type="number" min="2" max="60" value="${p.parcelas>1?p.parcelas:12}">
+    </div>
+    <label class="field-label">Data de início</label>
+    <input class="login-input" id="pData" type="date" value="${p.data_inicio||hoje()}">`;
+
+  const ligarForma = b => {
+    b.querySelector('#pForma').onchange = e => {
+      b.querySelector('#pBlocoParc').style.display = e.target.value==='parcelado'?'block':'none';
+    };
+  };
+  const salvarP = id => async b => {
+    const nome=b.querySelector('#pNome').value.trim();
+    const valor=b.querySelector('#pValor').value;
+    if(!nome || !Number(valor)) throw new Error('Preencha nome e valor.');
+    await api('plano.salvar',{
+      id, nome, resumo:b.querySelector('#pResumo').value.trim(), valor_total:valor,
+      forma_pagamento:b.querySelector('#pForma').value,
+      parcelas:b.querySelector('#pParcelas')?b.querySelector('#pParcelas').value:1,
+      data_inicio:b.querySelector('#pData').value,
+    });
+  };
+
+  document.getElementById('btnNovoP').onclick=()=>ligarForma(modal('Novo plano', formP(), salvarP(null)));
+  c.querySelectorAll('.btnEdP').forEach(b=>b.onclick=()=>{
+    const p=planos.find(x=>x.id===b.dataset.id);
+    ligarForma(modal('Editar plano', formP(p), salvarP(p.id)));
+  });
+  c.querySelectorAll('.btnAdiar').forEach(b=>b.onclick=()=>{
+    const p=planos.find(x=>x.id===b.dataset.id);
+    modal('Adiar plano', `
+      <p class="hint">Escolha a nova data de início de "${esc(p.nome)}".</p>
+      <label class="field-label">Nova data</label>
+      <input class="login-input" id="aData" type="date" value="${p.data_inicio}">
+    `, async b2=>{
+      await api('plano.adiar',{id:p.id, nova_data:b2.querySelector('#aData').value});
+    }, 'Adiar');
+  });
+  c.querySelectorAll('.btnConcluir').forEach(b=>b.onclick=async()=>{
+    await api('plano.concluir',{id:b.dataset.id}); await carregar();
+  });
+  c.querySelectorAll('.btnDelP').forEach(b=>b.onclick=async()=>{
+    if(!(await confirmar('Excluir esse plano? As despesas já geradas continuam lá.'))) return;
+    await api('plano.excluir',{id:b.dataset.id}); await carregar();
+  });
+}
+
+// ==================== 06 — RELATÓRIOS ======================
+function pgRelatorios(c){
+  const D=S.dados;
+  const minhasE=meus(D.entradas), minhasS=meus(D.saidas);
+  const porCat={};
+  minhasS.forEach(s=>{ porCat[s.categoria||'Sem categoria']=(porCat[s.categoria||'Sem categoria']||0)+Number(s.valor); });
+  const cats=Object.entries(porCat).sort((a,b)=>b[1]-a[1]);
+  const planos=D.planos||[];
+
+  c.innerHTML=`
+    <div class="page-header"><div class="eyebrow">Relatórios</div><h2>${nomeMes(S.mes)}</h2></div>
+    <div class="panel">
+      <label class="field-label">Mês / ano</label>
+      <input type="month" id="relMes" value="${S.mes}" style="max-width:190px;">
+      <p class="hint" style="margin:8px 0 0;">Use as setas no topo ou escolha aqui.</p>
+    </div>
+
+    <div class="split">
+      <div class="panel">
+        <h3>Entradas do mês — ${money(soma(minhasE))}</h3>
+        ${minhasE.length?`<table><thead><tr><th>Descrição</th><th>Tipo</th><th>Valor</th></tr></thead>
+          <tbody>${minhasE.map(e=>`<tr><td>${esc(e.descricao)}</td><td>${esc(e.tipo)}</td><td><b>${money(e.valor)}</b></td></tr>`).join('')}</tbody></table>`
+          :`<div class="empty-state">Sem entradas.</div>`}
+      </div>
+      <div class="panel">
+        <h3>Saídas por categoria — ${money(soma(minhasS))}</h3>
+        ${cats.length?`<table><thead><tr><th>Categoria</th><th>Valor</th><th>%</th></tr></thead>
+          <tbody>${cats.map(([n,v])=>`<tr><td>${esc(n)}</td><td><b>${money(v)}</b></td>
+            <td>${(v/soma(minhasS)*100).toFixed(1)}%</td></tr>`).join('')}</tbody></table>`
+          :`<div class="empty-state">Sem saídas.</div>`}
+      </div>
+    </div>
+
+    <div class="panel"><h3>Gastos por categoria</h3><canvas id="gCat" height="90"></canvas></div>
+    <div class="panel"><h3>Evolução do ano — entradas x saídas</h3><canvas id="gAno" height="90"></canvas></div>
+
+    <div class="panel">
+      <h3>Planos</h3>
+      <div class="split">
+        <div><b>Ativos (${planos.filter(p=>p.status==='ativo').length})</b><br>
+          <span class="hint">${planos.filter(p=>p.status==='ativo').map(p=>esc(p.nome)).join(', ')||'—'}</span></div>
+        <div><b>Futuros / pendentes (${planos.filter(p=>p.status==='pendente').length})</b><br>
+          <span class="hint">${planos.filter(p=>p.status==='pendente').map(p=>esc(p.nome)).join(', ')||'—'}</span></div>
+        <div><b>Concluídos (${planos.filter(p=>p.status==='concluido').length})</b><br>
+          <span class="hint">${planos.filter(p=>p.status==='concluido').map(p=>esc(p.nome)).join(', ')||'—'}</span></div>
+      </div>
+    </div>`;
+
+  document.getElementById('relMes').onchange=async e=>{ S.mes=e.target.value; await carregar(); };
+
+  new Chart(document.getElementById('gCat'),{
+    type:'bar',
+    data:{labels:cats.map(x=>x[0]), datasets:[{label:'Gasto', data:cats.map(x=>x[1]), backgroundColor:'#1B3A4B'}]},
+    options:{plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:v=>money(v)}}}}
+  });
+
+  api('ano',{ano:S.mes.slice(0,4)}).then(r=>{
+    const meses=Array.from({length:12},(_,i)=>`${S.mes.slice(0,4)}-${String(i+1).padStart(2,'0')}`);
+    const ent=meses.map(m=>soma(r.entradas.filter(e=>e.user_id===S.eu.id && e.mes_ref.slice(0,7)===m)));
+    const sai=meses.map(m=>soma(r.saidas.filter(s=>s.user_id===S.eu.id && s.mes_ref.slice(0,7)===m)));
+    new Chart(document.getElementById('gAno'),{
+      type:'line',
+      data:{labels:meses.map(m=>nomeMes(m).split(' de ')[0]), datasets:[
+        {label:'Entradas', data:ent, borderColor:'#2F7D5A', backgroundColor:'#2F7D5A', tension:.3},
+        {label:'Saídas', data:sai, borderColor:'#B5482F', backgroundColor:'#B5482F', tension:.3},
+      ]},
+      options:{scales:{y:{ticks:{callback:v=>money(v)}}}}
+    });
+  }).catch(()=>{});
+}
+
+// ==================== CATEGORIAS ===========================
+function pgCategorias(c){
+  const cats=S.dados.categorias||[];
+  c.innerHTML=`
+    <div class="page-header"><div class="eyebrow">Categorias</div><h2>Minhas categorias</h2></div>
+    <div class="panel">
+      <p class="hint">Cada pessoa tem as suas. As da Renata são separadas das suas.</p>
+      <div class="form-row">
+        <input type="text" id="novaCat" placeholder="Nome da nova categoria">
+        <button class="primary-btn" id="btnAddCat">Adicionar</button>
+      </div>
+      <div style="margin-top:10px;">
+        ${cats.length?cats.map(x=>`<span class="chip">${esc(x.nome)} <button class="btnDelCat" data-id="${x.id}">✕</button></span>`).join('')
+          :`<div class="empty-state">Nenhuma categoria.</div>`}
+      </div>
+    </div>`;
+  document.getElementById('btnAddCat').onclick=async()=>{
+    const n=document.getElementById('novaCat').value.trim();
+    if(!n) return;
+    await api('categoria.salvar',{nome:n}); await carregar();
+  };
+  c.querySelectorAll('.btnDelCat').forEach(b=>b.onclick=async()=>{
+    if(!(await confirmar('Remover essa categoria? As contas que já usam ela continuam normais.'))) return;
+    await api('categoria.excluir',{id:b.dataset.id}); await carregar();
+  });
+}
+
+// ====================== PERFIL =============================
+function pgPerfil(c){
+  const parceiro = S.eu.parceiro_id ? nomeDe(S.eu.parceiro_id) : null;
+  c.innerHTML=`
+    <div class="page-header"><div class="eyebrow">Meu perfil</div><h2>${esc(S.eu.nome)}</h2></div>
+    <div class="panel" style="max-width:460px;">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+        ${S.eu.foto?`<img src="${S.eu.foto}" style="width:70px;height:70px;border-radius:50%;object-fit:cover;">`
+          :`<div class="whoami-avatar whoami-avatar-fallback" style="width:70px;height:70px;font-size:26px;">${esc(S.eu.nome[0].toUpperCase())}</div>`}
+        <div>
+          <div style="font-weight:700;font-size:16px;">${esc(S.eu.nome)}</div>
+          <div class="hint" style="margin:2px 0 0;">Usuário: ${esc(S.eu.usuario)}</div>
+          <div class="hint" style="margin:2px 0 0;">${parceiro?`Vinculado(a) como casal com <b>${esc(parceiro)}</b>`:'Sem vínculo de casal'}</div>
+        </div>
+      </div>
+      <label class="field-label">Trocar foto</label>
+      <input type="file" id="fFoto" accept="image/*">
+      <div id="msgFoto"></div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:18px 0;">
+      <label class="field-label">Trocar minha senha</label>
+      <div class="form-row">
+        <input type="password" id="novaSenha" placeholder="Nova senha">
+        <button class="primary-btn" id="btnSenha">Salvar senha</button>
+      </div>
+      <div id="msgSenha"></div>
+    </div>`;
+  document.getElementById('fFoto').onchange=async()=>{
+    const f=document.getElementById('fFoto').files[0]; if(!f) return;
+    const m=document.getElementById('msgFoto');
+    try{
+      const b64=await imagemBase64(f);
+      await api('perfil.foto',{foto:b64});
+      m.innerHTML=`<div class="msg ok">Foto atualizada.</div>`;
+      await carregar();
+    }catch(e){ m.innerHTML=`<div class="msg err">${esc(e.message)}</div>`; }
+  };
+  document.getElementById('btnSenha').onclick=async()=>{
+    const s=document.getElementById('novaSenha').value.trim();
+    const m=document.getElementById('msgSenha');
+    if(s.length<4){ m.innerHTML=`<div class="msg err">Senha muito curta.</div>`; return; }
+    await api('perfil.senha',{senha:s});
+    document.getElementById('novaSenha').value='';
+    m.innerHTML=`<div class="msg ok">Senha alterada.</div>`;
+  };
+}
+
+// ===================== USUÁRIOS (admin) ====================
+function pgUsuarios(c){
+  const us=S.dados.usuarios||[];
+  c.innerHTML=`
     <div class="page-header"><div class="eyebrow">Usuários</div><h2>Quem tem acesso</h2></div>
     <div class="panel">
       <h3>Adicionar pessoa</h3>
       <div class="form-row">
-        <input type="text" id="novoNomeUsuario" placeholder="Nome">
-        <input type="text" id="novoLoginUsuario" placeholder="Usuário (login)">
-        <input type="text" id="novaSenhaUsuario" placeholder="Senha">
-        <button class="primary-btn" id="btnAddUsuario">Adicionar</button>
+        <div><label class="field-label">Nome</label><input type="text" id="uNome"></div>
+        <div><label class="field-label">Usuário (login)</label><input type="text" id="uLogin"></div>
+        <div><label class="field-label">Senha</label><input type="text" id="uSenha"></div>
+        <button class="primary-btn" id="btnAddU">Adicionar</button>
       </div>
-      <div id="msgUsuarios"></div>
+      <div id="msgU"></div>
     </div>
     <div class="panel">
-      <h3>Pessoas com acesso</h3>
-      <table>
-        <thead><tr><th>Nome</th><th>Usuário</th><th>Admin</th><th>Nova senha</th><th></th></tr></thead>
-        <tbody>
-          ${STATE.usuarios.map(u => `
-            <tr>
-              <td>${u.nome}</td>
-              <td>${u.usuario}</td>
-              <td>${u.admin ? 'Sim' : 'Não'}</td>
-              <td><input type="text" class="senhaResetInput" data-usuario="${u.usuario}" placeholder="Deixe em branco pra manter" style="width:160px;"></td>
-              <td>
-                <button class="ghost-btn btnSalvarSenhaUsuario" data-usuario="${u.usuario}">Salvar</button>
-                ${u.usuario!==STATE.session.usuario ? `<button class="danger-btn btnRemoverUsuario" data-usuario="${u.usuario}">Remover</button>` : ''}
-              </td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
-  `;
-  document.getElementById('btnAddUsuario').onclick = async () => {
-    const msg = document.getElementById('msgUsuarios');
-    const nome = document.getElementById('novoNomeUsuario').value.trim();
-    const usuario = document.getElementById('novoLoginUsuario').value.trim().toLowerCase();
-    const senha = document.getElementById('novaSenhaUsuario').value.trim();
-    if(!nome || !usuario || !senha){ msg.innerHTML = `<div class="msg err">Preencha nome, usuário e senha.</div>`; return; }
-    if(STATE.usuarios.some(u=>u.usuario===usuario)){ msg.innerHTML = `<div class="msg err">Esse usuário já existe.</div>`; return; }
-    const hash = await hashSenha(senha);
-    STATE.usuarios.push({nome, usuario, senha:hash, admin:false});
-    await safeSet('fin:usuarios', STATE.usuarios);
-    msg.innerHTML = `<div class="msg ok">${nome} adicionado(a) com sucesso.</div>`;
-    renderUsuarios(main);
+      <h3>Pessoas</h3>
+      <p class="hint">O vínculo de casal soma os dois no painel, mantendo a visão individual de cada um.</p>
+      <table><thead><tr><th>Nome</th><th>Login</th><th>Admin</th><th>Vínculo de casal</th><th>Nova senha</th><th></th></tr></thead>
+        <tbody>${us.map(u=>`<tr>
+          <td>${esc(u.nome)}</td><td>${esc(u.usuario)}</td><td>${u.admin?'Sim':'Não'}</td>
+          <td><select class="selVinc" data-id="${u.id}" style="min-width:150px;">
+            <option value="">— sem vínculo —</option>
+            ${us.filter(o=>o.id!==u.id).map(o=>`<option value="${o.id}" ${u.parceiro_id===o.id?'selected':''}>${esc(o.nome)}</option>`).join('')}
+          </select></td>
+          <td><input type="text" class="inSenha" data-id="${u.id}" placeholder="deixe em branco" style="width:150px;"></td>
+          <td style="white-space:nowrap;">
+            <button class="ghost-btn btnSalvarU" data-id="${u.id}">Salvar</button>
+            ${u.id!==S.eu.id?`<button class="danger-btn btnDelU" data-id="${u.id}">Remover</button>`:''}
+          </td></tr>`).join('')}</tbody></table>
+    </div>`;
+
+  document.getElementById('btnAddU').onclick=async()=>{
+    const m=document.getElementById('msgU');
+    const nome=document.getElementById('uNome').value.trim();
+    const usuario=document.getElementById('uLogin').value.trim();
+    const senha=document.getElementById('uSenha').value.trim();
+    if(!nome||!usuario||!senha){ m.innerHTML=`<div class="msg err">Preencha tudo.</div>`; return; }
+    const r=await api('usuario.criar',{nome,usuario,senha});
+    if(r.ok===false){ m.innerHTML=`<div class="msg err">${esc(r.message)}</div>`; return; }
+    await carregar();
   };
-  main.querySelectorAll('.btnSalvarSenhaUsuario').forEach(btn => {
-    btn.onclick = async () => {
-      const input = main.querySelector(`.senhaResetInput[data-usuario="${btn.dataset.usuario}"]`);
-      const novaSenha = input.value.trim();
-      if(!novaSenha) return;
-      const u = STATE.usuarios.find(x=>x.usuario===btn.dataset.usuario);
-      u.senha = await hashSenha(novaSenha);
-      await safeSet('fin:usuarios', STATE.usuarios);
-      input.value = '';
-      document.getElementById('msgUsuarios').innerHTML = `<div class="msg ok">Senha de ${u.nome} atualizada.</div>`;
-    };
+  c.querySelectorAll('.btnSalvarU').forEach(b=>b.onclick=async()=>{
+    const id=b.dataset.id;
+    const senha=c.querySelector(`.inSenha[data-id="${id}"]`).value.trim();
+    const vinc=c.querySelector(`.selVinc[data-id="${id}"]`).value;
+    if(senha) await api('usuario.senha',{id,senha});
+    await api('usuario.vincular',{id_1:id, id_2:vinc||null});
+    await carregar();
   });
-  main.querySelectorAll('.btnRemoverUsuario').forEach(btn => {
-    btn.onclick = async () => {
-      if(!(await confirmarAcao('Remover o acesso dessa pessoa?'))) return;
-      STATE.usuarios = STATE.usuarios.filter(u=>u.usuario!==btn.dataset.usuario);
-      await safeSet('fin:usuarios', STATE.usuarios);
-      renderUsuarios(main);
-    };
+  c.querySelectorAll('.btnDelU').forEach(b=>b.onclick=async()=>{
+    if(!(await confirmar('Remover essa pessoa? TODOS os lançamentos dela serão apagados.'))) return;
+    await api('usuario.excluir',{id:b.dataset.id}); await carregar();
   });
 }
 
-// ---------------- INIT ----------------
-(async function init(){
-  await loadAll();
-  render();
+// ======================== INÍCIO ===========================
+(async function(){
+  if(!S.token){ telaLogin(); return; }
+  app.innerHTML=`<div class="loading" style="min-height:100vh;">Carregando…</div>`;
+  await carregar();
 })();
 </script>
 </body>

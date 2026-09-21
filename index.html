@@ -469,18 +469,26 @@ function ligarBotoesSaida(c){
     const s=S.dados.saidas.find(x=>x.grupo_id===grupoId);
     if(!s) return;
     const nomeBase=s.nome.replace(/\s*\(\d+\/\d+\)\s*$/,'');
+    const valorTotalAtual=(Number(s.valor)*Number(s.total_parcelas)).toFixed(2);
     modal(`Editar todas as parcelas (${s.total_parcelas}x)`, `
       <label class="field-label">Nome</label>
       <input class="login-input" id="gNome" value="${esc(nomeBase)}">
       <label class="field-label">Categoria</label>
       <select class="login-input" id="gCat">${opcoesCategoria(s.categoria)}</select>
-      <label class="field-label">Valor de CADA parcela (R$)</label>
-      <input class="login-input" id="gValor" type="number" step="0.01" value="${s.valor}">
-      <p class="hint" style="margin-top:6px;">Atualiza nome, categoria e valor nas ${s.total_parcelas} parcelas de uma vez. As datas e o que já foi marcado como pago não mudam.</p>
+      <label class="field-label">Valor total (R$)</label>
+      <input class="login-input" id="gValorTotal" type="number" step="0.01" value="${valorTotalAtual}">
+      <label class="field-label">Quantidade de parcelas</label>
+      <input class="login-input" id="gParcelas" type="number" min="1" max="60" value="${s.total_parcelas}">
+      <label class="field-label">Data da 1ª parcela (deixe em branco pra manter)</label>
+      <input class="login-input" id="gData" type="date">
+      <p class="hint" style="margin-top:6px;">Atualiza nome, categoria, valor total e quantidade de parcelas. Se mudar a quantidade ou a data da 1ª parcela, as datas de todas são recalculadas. Parcela já paga não some se você reduzir a quantidade — nesse caso, exclua ela antes.</p>
     `, async b2=>{
       const r = await api('saida.editarGrupo',{
         grupo_id:grupoId, nome:b2.querySelector('#gNome').value.trim(),
-        categoria:b2.querySelector('#gCat').value, valor:b2.querySelector('#gValor').value,
+        categoria:b2.querySelector('#gCat').value,
+        valor_total:b2.querySelector('#gValorTotal').value,
+        total_parcelas:b2.querySelector('#gParcelas').value,
+        data:b2.querySelector('#gData').value || undefined,
       });
       if(r && r.ok===false) throw new Error(r.message||'Não deu pra editar.');
     });

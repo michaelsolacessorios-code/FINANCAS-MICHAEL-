@@ -378,6 +378,7 @@ function linhaSaida(s, editavel){
     ${editavel?`<td style="white-space:nowrap;">
       <button class="ghost-btn btnPagar" data-id="${s.id}" data-pago="${s.pago?1:0}">${s.pago?'Desmarcar':'Pago'}</button>
       <button class="ghost-btn btnEdSaida" data-id="${s.id}">Editar</button>
+      ${s.grupo_id?`<button class="ghost-btn btnEdGrupo" data-grupo="${s.grupo_id}">Editar todas</button>`:''}
       <button class="danger-btn btnDelSaida" data-id="${s.id}" data-grupo="${s.grupo_id||''}">Excluir</button>
     </td>`:`<td style="font-size:12.5px;color:var(--ink-soft);">${esc(nomeDe(s.user_id))}</td>`}
   </tr>`;
@@ -454,12 +455,34 @@ function ligarBotoesSaida(c){
       <label class="field-label">Data</label>
       <input class="login-input" id="eData" type="date" value="${s.data}">
       ${s.conta_fixa_id?`<p class="hint" style="margin-top:6px;">Conta fixa: o valor alterado vale deste mês em diante.</p>`:''}
+      ${s.grupo_id?`<p class="hint" style="margin-top:6px;">Isso edita só a parcela ${s.parcela_atual}/${s.total_parcelas}. Pra mudar todas de uma vez, use "Editar todas".</p>`:''}
     `, async b2=>{
       await api('saida.salvar',{
         id:s.id, nome:b2.querySelector('#eNome').value.trim(),
         categoria:b2.querySelector('#eCat').value,
         valor:b2.querySelector('#eValor').value, data:b2.querySelector('#eData').value,
       });
+    });
+  });
+  c.querySelectorAll('.btnEdGrupo').forEach(b=>b.onclick=()=>{
+    const grupoId=b.dataset.grupo;
+    const s=S.dados.saidas.find(x=>x.grupo_id===grupoId);
+    if(!s) return;
+    const nomeBase=s.nome.replace(/\s*\(\d+\/\d+\)\s*$/,'');
+    modal(`Editar todas as parcelas (${s.total_parcelas}x)`, `
+      <label class="field-label">Nome</label>
+      <input class="login-input" id="gNome" value="${esc(nomeBase)}">
+      <label class="field-label">Categoria</label>
+      <select class="login-input" id="gCat">${opcoesCategoria(s.categoria)}</select>
+      <label class="field-label">Valor de CADA parcela (R$)</label>
+      <input class="login-input" id="gValor" type="number" step="0.01" value="${s.valor}">
+      <p class="hint" style="margin-top:6px;">Atualiza nome, categoria e valor nas ${s.total_parcelas} parcelas de uma vez. As datas e o que já foi marcado como pago não mudam.</p>
+    `, async b2=>{
+      const r = await api('saida.editarGrupo',{
+        grupo_id:grupoId, nome:b2.querySelector('#gNome').value.trim(),
+        categoria:b2.querySelector('#gCat').value, valor:b2.querySelector('#gValor').value,
+      });
+      if(r && r.ok===false) throw new Error(r.message||'Não deu pra editar.');
     });
   });
 }

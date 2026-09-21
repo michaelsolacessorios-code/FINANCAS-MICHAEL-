@@ -159,24 +159,70 @@ module.exports = async (req, res) => {
       return res.json({ ok: true });
     }
 
-    // Edita nome/categoria/valor de TODAS as parcelas de um grupo de uma vez.
-    // O valor informado é o valor de CADA parcela (não o total) — mantém
-    // as datas e o status de pago/não pago como já estavam.
+    // Edita nome/categoria/valor total/quantidade de parcelas/data da 1ª
+    // parcela de TODAS as parcelas de um grupo de uma vez.
+    // - d.valor_total é o valor TOTAL (dividido igualmente pelas parcelas).
+    // - Se a quantidade e a data da 1ª parcela não mudarem, só atualiza
+    //   nome/categoria/valor e mantém as datas e o pago/não pago de cada uma.
+    // - Se mudar a quantidade e/ou a data, recalcula as datas a partir da
+    //   1ª parcela; parcelas que continuam existindo são só atualizadas
+    //   (mantém o pago), as que sobram são criadas e as que não cabem mais
+    //   são removidas — nunca apaga tudo e recria do zero.
     if (acao === 'saida.editarGrupo') {
       if (!uuid(d.grupo_id)) return res.json({ ok: false, message: 'Parcelamento inválido.' });
       const linhas = await select(
         'fin_saidas',
-        `grupo_id=eq.${d.grupo_id}&${meu}&select=id,parcela_atual,total_parcelas&order=parcela_atual`
+        `grupo_id=eq.${d.grupo_id}&${meu}&select=id,data,parcela_atual,total_parcelas,pago&order=parcela_atual`
       );
       if (!linhas || !linhas.length) {
         return res.json({ ok: false, message: 'Não achei essas parcelas.' });
       }
-      await Promise.all(linhas.map(l => update('fin_saidas', `id=eq.${l.id}&${meu}`, {
-        nome: `${d.nome} (${l.parcela_atual}/${l.total_parcelas})`,
-        categoria: d.categoria,
-        valor: Number(d.valor),
-      })));
-      return res.json({ ok: true, atualizadas: linhas.length });
+      const novoTotal = Math.max(1, Number(d.total_parcelas) || linhas.length);
+      const valorTotal = Number(d.valor_total);
+      if (!valorTotal) return res.json({ ok: false, message: 'Informe o valor total.' });
+      const valorParcela = Math.round((valorTotal / novoTotal) * 100) / 100;
+      const novaData = d.data || linhas[0].data;
+      const mudouEsquema = novoTotal !== linhas.length || novaData !== linhas[0].data;
+
+      if (!mudouEsquema) {
+        await Promise.all(linhas.map(l => update('fin_saidas', `id=eq.${l.id}&${meu}`, {
+          nome: `${d.nome} (${l.parcela_atual}/${novoTotal})`,
+          categoria: d.categoria,
+          valor: valorParcela,
+        })));
+        return res.json({ ok: true, atualizadas: linhas.length });
+      }
+
+      if (novoTotal < linhas.length && linhas.slice(novoTotal).some(l => l.pago)) {
+        return res.json({ ok: false, message: 'Tem parcela já paga além dessa quantidade nova. Apague ela primeiro se quiser reduzir.' });
+      }
+
+      const [a, m, dia] = String(novaData).split('-').map(Number);
+      const tarefas = [];
+      for (let i = 0; i < Math.max(novoTotal, linhas.length); i++) {
+        const total = a * 12 + (m - 1) + i;
+        const ano = Math.floor(total / 12);
+        const mes = (total % 12) + 1;
+        const ultimo = new Date(ano, mes, 0).getDate();
+        const diaOk = Math.min(dia, ultimo);
+        const dataParcela = `${ano}-${String(mes).padStart(2, '0')}-${String(diaOk).padStart(2, '0')}`;
+        const mesRefParcela = `${ano}-${String(mes).padStart(2, '0')}-01`;
+        if (i < novoTotal && i < linhas.length) {
+          tarefas.push(update('fin_saidas', `id=eq.${linhas[i].id}&${meu}`, {
+            nome: `${d.nome} (${i + 1}/${novoTotal})`, categoria: d.categoria, valor: valorParcela,
+            data: dataParcela, mes_ref: mesRefParcela, parcela_atual: i + 1, total_parcelas: novoTotal,
+          }));
+        } else if (i < novoTotal) {
+          tarefas.push(insert('fin_saidas', {
+            user_id: eu.id, nome: `${d.nome} (${i + 1}/${novoTotal})`, categoria: d.categoria, valor: valorParcela,
+            data: dataParcela, mes_ref: mesRefParcela, parcela_atual: i + 1, total_parcelas: novoTotal, grupo_id: d.grupo_id,
+          }));
+        } else {
+          tarefas.push(remover('fin_saidas', `id=eq.${linhas[i].id}&${meu}`));
+        }
+      }
+      await Promise.all(tarefas);
+      return res.json({ ok: true, total_parcelas: novoTotal });
     }
 
     if (acao === 'saida.pago') {

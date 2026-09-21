@@ -356,16 +356,16 @@ function pgPainel(c){
     ${pendentes.map(p=>`${esc(p.nome)} — ${money(p.valor_total)} a partir de ${dataPt(p.data_inicio)}`).join('<br>')}
   </div>` : '';
 
-  const agendaHoje = (D.agenda||[]).filter(a=>a.data===hoje() && a.status!=='cancelado');
-  const blocoAgendaHoje = agendaHoje.length ? `<div class="panel"><h3>📅 Hoje na agenda</h3>
-    <table><thead><tr><th>Nome</th><th>Detalhe</th><th>Status</th><th></th></tr></thead>
+  const agendaHoje = (D.agenda||[]).filter(a=>a.status==='pendente').slice().sort((a,b)=>a.data<b.data?-1:(a.data>b.data?1:0));
+  const blocoAgendaHoje = agendaHoje.length ? `<div class="panel"><h3>📅 Compromissos e tarefas pendentes</h3>
+    <table><thead><tr><th>Nome</th><th>Detalhe</th><th>Data</th><th>Status</th><th></th></tr></thead>
     <tbody>${agendaHoje.map(a=>{
       const badge = a.tipo==='compromisso' ? '<span class="badge fixa">Compromisso</span>' : '<span class="badge variavel">Tarefa</span>';
       const detalhe = a.tipo==='compromisso'
         ? `${a.local?esc(a.local):''}${a.local&&a.hora?' · ':''}${a.hora?a.hora.slice(0,5):''}`
         : esc(a.descricao||'');
       const statusBadge = a.status==='confirmado' ? '<span class="badge pago">Confirmado</span>' : '<span class="badge pendente">Pendente</span>';
-      return `<tr><td><b>${esc(a.nome)}</b> ${badge}</td><td style="font-size:12.5px;color:var(--ink-soft);">${detalhe||'—'}</td><td>${statusBadge}</td>
+      return `<tr><td><b>${esc(a.nome)}</b> ${badge}</td><td style="font-size:12.5px;color:var(--ink-soft);">${detalhe||'—'}</td><td>${dataPt(a.data)}</td><td>${statusBadge}</td>
         <td>${a.status==='pendente'?`<button class="ghost-btn btnConfAgHoje" data-id="${a.id}">Confirmado</button>`:''}</td></tr>`;
     }).join('')}</tbody></table></div>` : '';
 
@@ -938,7 +938,9 @@ function linhaAgenda(a){
   return `<tr>
     <td><b>${esc(a.nome)}</b> ${badge}</td>
     <td style="font-size:12.5px;color:var(--ink-soft);">${detalhe||'—'}</td>
+    <td style="font-size:12.5px;color:var(--ink-faint);">${dataPt((a.created_at||'').slice(0,10))}</td>
     <td>${dataPt(a.data)}</td>
+    <td style="font-size:12.5px;color:var(--ink-faint);">${a.concluido_em?dataPt(a.concluido_em.slice(0,10)):'—'}</td>
     <td>${statusBadge}</td>
     <td style="white-space:nowrap;">
       ${a.status==='pendente'?`<button class="ghost-btn btnConfAg" data-id="${a.id}">Confirmado</button>
@@ -981,7 +983,7 @@ function pgAgenda(c){
   const blocos = datas.length ? datas.map(dt=>`
     <div class="panel">
       <h3>${dataPt(dt)}</h3>
-      <table><thead><tr><th>Nome</th><th>Detalhe</th><th>Data</th><th>Status</th><th></th></tr></thead>
+      <table><thead><tr><th>Nome</th><th>Detalhe</th><th>Criado</th><th>Agendado</th><th>Concluído</th><th>Status</th><th></th></tr></thead>
         <tbody>${porData[dt].map(linhaAgenda).join('')}</tbody></table>
     </div>`).join('') : `<div class="empty-state">Nada na agenda ainda.</div>`;
 

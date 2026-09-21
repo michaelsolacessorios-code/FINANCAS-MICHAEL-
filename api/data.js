@@ -39,7 +39,7 @@ module.exports = async (req, res) => {
       const ids = [eu.id, eu.parceiro_id].filter(Boolean);
       const filtroDupla = `user_id=in.(${ids.join(',')})`;
 
-      const [entradas, saidas, futuras, categorias, contasFixas, entradasFixas, planos, usuarios] =
+      const [entradas, saidas, futuras, categorias, contasFixas, entradasFixas, planos, planoItens, agenda, usuarios] =
         await Promise.all([
           select('fin_entradas', `${filtroDupla}&mes_ref=eq.${mesRef}&select=*&order=data`),
           select('fin_saidas', `${filtroDupla}&mes_ref=eq.${mesRef}&select=*&order=data`),
@@ -49,12 +49,15 @@ module.exports = async (req, res) => {
           select('fin_contas_fixas', `${meu}&select=*&order=dia_vencimento`),
           select('fin_entradas_fixas', `${meu}&select=*&order=dia`),
           select('fin_planos', `${meu}&select=*&order=data_inicio`),
+          select('fin_plano_itens', `${meu}&select=*&order=created_at`),
+          // agenda: TODOS os compromissos/tarefas (não só do mês), pro painel filtrar hoje e a aba Agenda listar tudo
+          select('fin_agenda', `${meu}&select=*&order=data`),
           select('fin_usuarios', 'select=id,nome,usuario,admin,foto,parceiro_id&order=created_at'),
         ]);
 
       return res.json({
         ok: true, eu, mes: mesRef,
-        entradas, saidas, futuras, categorias, contasFixas, entradasFixas, planos, usuarios,
+        entradas, saidas, futuras, categorias, contasFixas, entradasFixas, planos, planoItens, agenda, usuarios,
       });
     }
 
@@ -276,10 +279,34 @@ module.exports = async (req, res) => {
         parcelas: d.forma_pagamento === 'parcelado' ? Math.max(2, Number(d.parcelas) || 2) : 1,
         data_inicio: d.data_inicio,
       };
-      if (uuid(d.id)) {
-        await update('fin_planos', `id=eq.${d.id}&${meu}`, linha);
+      const itens = Array.isArray(d.itens) ? d.itens.filter(it => it && it.nome && Number(it.valor) > 0) : [];
+      if (itens.length) {
+        linha.valor_total = itens.reduce((s, it) => s + Number(it.valor), 0);
+        // valores de referência (não usados na ativação quando há itens, mas mantidos coerentes)
+        linha.forma_pagamento = itens.length === 1 ? itens[0].forma_pagamento : 'parcelado';
+        linha.parcelas = itens.length === 1 ? Math.max(1, Number(itens[0].parcelas) || 1) : 1;
+      }
+      let planoId = d.id;
+      if (uuid(planoId)) {
+        const atual = await select('fin_planos', `id=eq.${planoId}&${meu}&select=status`);
+        if (!atual || !atual.length) return res.json({ ok: false, message: 'Plano não encontrado.' });
+        if (atual[0].status !== 'pendente') {
+          return res.json({ ok: false, message: 'Esse plano já foi ativado, não dá pra editar os itens.' });
+        }
+        await update('fin_planos', `id=eq.${planoId}&${meu}`, linha);
       } else {
-        await insert('fin_planos', { ...linha, user_id: eu.id, status: 'pendente' });
+        const criado = await insert('fin_planos', { ...linha, user_id: eu.id, status: 'pendente' });
+        planoId = criado && criado[0] && criado[0].id;
+      }
+      if (planoId) {
+        await remover('fin_plano_itens', `plano_id=eq.${planoId}`);
+        if (itens.length) {
+          await insert('fin_plano_itens', itens.map(it => ({
+            plano_id: planoId, user_id: eu.id, nome: it.nome,
+            valor: Number(it.valor), forma_pagamento: it.forma_pagamento,
+            parcelas: it.forma_pagamento === 'parcelado' ? Math.max(2, Number(it.parcelas) || 2) : 1,
+          })));
+        }
       }
       return res.json({ ok: true });
     }
@@ -298,6 +325,43 @@ module.exports = async (req, res) => {
 
     if (acao === 'plano.excluir') {
       await remover('fin_planos', `id=eq.${d.id}&${meu}`);
+      return res.json({ ok: true });
+    }
+
+    // -----------------------------------------------------------------
+    // AGENDA (compromissos e tarefas)
+    // -----------------------------------------------------------------
+    if (acao === 'agenda.salvar') {
+      const tipo = d.tipo === 'tarefa' ? 'tarefa' : 'compromisso';
+      const linha = {
+        tipo,
+        nome: d.nome,
+        data: d.data,
+        local: tipo === 'compromisso' ? (d.local || null) : null,
+        hora: tipo === 'compromisso' ? (d.hora || null) : null,
+        descricao: tipo === 'tarefa' ? (d.descricao || null) : null,
+      };
+      if (uuid(d.id)) {
+        await update('fin_agenda', `id=eq.${d.id}&${meu}`, linha);
+      } else {
+        await insert('fin_agenda', { ...linha, user_id: eu.id, status: 'pendente' });
+      }
+      return res.json({ ok: true });
+    }
+
+    if (acao === 'agenda.confirmar') {
+      await update('fin_agenda', `id=eq.${d.id}&${meu}`, { status: 'confirmado' });
+      return res.json({ ok: true });
+    }
+
+    if (acao === 'agenda.cancelar') {
+      // nunca exclui: só muda status, some do painel mas fica no histórico
+      await update('fin_agenda', `id=eq.${d.id}&${meu}`, { status: 'cancelado' });
+      return res.json({ ok: true });
+    }
+
+    if (acao === 'agenda.prorrogar') {
+      await update('fin_agenda', `id=eq.${d.id}&${meu}`, { data: d.nova_data, status: 'pendente' });
       return res.json({ ok: true });
     }
 

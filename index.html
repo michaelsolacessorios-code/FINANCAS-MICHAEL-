@@ -4,33 +4,37 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Finanças — Contas Pessoais</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root{
-    --bg:#F6F5F1; --panel:#FFFFFF; --ink:#1C2430; --ink-soft:#5B6470; --ink-faint:#9AA2AC;
-    --border:#E4E2DC; --primary:#1B3A4B; --primary-dark:#12262F; --accent:#C99A3E;
-    --ok:#2F7D5A; --danger:#B5482F; --warn:#C98A2E;
+    --bg:#0E1116; --panel:#171B22; --ink:#E7E9EC; --ink-soft:#9AA2AC; --ink-faint:#6B7280;
+    --border:#262B33; --primary:#3B82F6; --primary-dark:#2563EB; --accent:#3B82F6;
+    --ok:#4ADE80; --danger:#F87171; --warn:#FBBF24;
+    --sidebar-bg:#15191F; --sidebar-text:#9AA2AC; --field-bg:#1B212B;
   }
   *{box-sizing:border-box;}
-  body{margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink);}
+  body{margin:0; font-family:'Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink);}
   .shell{display:flex; min-height:100vh;}
-  .sidebar{width:230px; background:var(--primary-dark); color:#EDEAE2; flex-shrink:0; padding:22px 0; display:flex; flex-direction:column;}
+  .sidebar{width:230px; background:var(--sidebar-bg); color:var(--sidebar-text); flex-shrink:0; padding:22px 0; display:flex; flex-direction:column;}
   .sidebar .brand{padding:0 20px 22px; font-size:17px; font-weight:700; display:flex; align-items:center; gap:8px; border-bottom:1px solid rgba(255,255,255,.1); margin-bottom:12px;}
   .sidebar .brand span.dot{width:9px; height:9px; border-radius:50%; background:var(--accent); display:inline-block;}
-  .nav-item{padding:11px 20px; cursor:pointer; font-size:14px; color:#C9C5B8; transition:.15s;}
+  .nav-item{padding:11px 20px; cursor:pointer; font-size:14px; color:var(--sidebar-text); transition:.15s;}
   .nav-item:hover{background:rgba(255,255,255,.06); color:#fff;}
-  .nav-item.active{background:var(--accent); color:#1C1400; font-weight:600;}
+  .nav-item.active{background:var(--accent); color:#fff; font-weight:600;}
   .main{flex:1; padding:26px 32px; max-width:1180px;}
   .topbar{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:18px; flex-wrap:wrap;}
-  .mes-nav{display:flex; align-items:center; gap:8px; background:#fff; border:1px solid var(--border); border-radius:30px; padding:5px 8px;}
+  .mes-nav{display:flex; align-items:center; gap:8px; background:var(--panel); border:1px solid var(--border); border-radius:30px; padding:5px 8px;}
   .mes-nav button{border:none; background:none; cursor:pointer; font-size:17px; color:var(--primary); padding:0 7px; line-height:1;}
   .mes-nav .mes-label{font-size:13.5px; font-weight:700; min-width:140px; text-align:center; text-transform:capitalize;}
   .whoami-avatar{width:34px; height:34px; border-radius:50%; object-fit:cover;}
   .whoami-avatar-fallback{display:flex; align-items:center; justify-content:center; background:var(--primary); color:#fff; font-weight:700; font-size:14px;}
-  .topbar-user{display:flex; align-items:center; gap:10px; background:#fff; border:1px solid var(--border); border-radius:30px; padding:6px 8px 6px 6px;}
+  .topbar-user{display:flex; align-items:center; gap:10px; background:var(--panel); border:1px solid var(--border); border-radius:30px; padding:6px 8px 6px 6px;}
   .whoami{font-size:12.5px; color:var(--ink-soft); line-height:1.3;}
   .whoami b{display:block; color:var(--ink); font-size:13.5px;}
-  .logout-btn{border:1px solid var(--border); background:#fff; border-radius:20px; padding:7px 14px; font-size:13px; cursor:pointer; color:var(--ink-soft);}
+  .logout-btn{border:1px solid var(--border); background:var(--panel); border-radius:20px; padding:7px 14px; font-size:13px; cursor:pointer; color:var(--ink-soft);}
   .logout-btn:hover{border-color:var(--ink-faint); color:var(--ink);}
   .page-header{margin-bottom:18px;}
   .eyebrow{font-size:12px; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:.04em;}
@@ -48,41 +52,41 @@
   .form-row{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px; align-items:flex-end;}
   .form-row > div{display:flex; flex-direction:column; gap:4px;}
   .field-label{font-size:12px; color:var(--ink-soft); font-weight:600;}
-  input, select, textarea{padding:9px 11px; border:1px solid var(--border); border-radius:8px; font-size:14px; background:#fff; color:var(--ink); font-family:inherit;}
+  input, select, textarea{padding:9px 11px; border:1px solid var(--border); border-radius:8px; font-size:14px; background:var(--field-bg); color:var(--ink); font-family:inherit;}
   input:focus, select:focus, textarea:focus{outline:2px solid var(--primary); outline-offset:1px;}
   .primary-btn{background:var(--primary); color:#fff; border:none; padding:10px 18px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;}
   .primary-btn:hover{background:var(--primary-dark);}
   .primary-btn:disabled{opacity:.5; cursor:default;}
-  .ghost-btn{background:#fff; color:var(--primary); border:1px solid var(--border); padding:8px 14px; border-radius:8px; font-size:13px; cursor:pointer;}
+  .ghost-btn{background:var(--panel); color:var(--primary); border:1px solid var(--border); padding:8px 14px; border-radius:8px; font-size:13px; cursor:pointer;}
   .ghost-btn:hover{border-color:var(--primary);}
-  .danger-btn{background:#fff; color:var(--danger); border:1px solid var(--danger); padding:6px 12px; border-radius:7px; font-size:12.5px; cursor:pointer;}
+  .danger-btn{background:var(--panel); color:var(--danger); border:1px solid var(--danger); padding:6px 12px; border-radius:7px; font-size:12.5px; cursor:pointer;}
   table{width:100%; border-collapse:collapse; font-size:13.5px;}
   th{text-align:left; font-size:11.5px; color:var(--ink-soft); font-weight:700; text-transform:uppercase; letter-spacing:.03em; padding:8px 10px; border-bottom:2px solid var(--border);}
   td{padding:10px; border-bottom:1px solid var(--border); vertical-align:middle;}
   tr:last-child td{border-bottom:none;}
   .badge{display:inline-block; padding:3px 10px; border-radius:20px; font-size:11.5px; font-weight:600;}
-  .badge.pendente{background:#FBF0DC; color:#8A5E17;}
-  .badge.pago{background:#E2F0E8; color:var(--ok);}
-  .badge.atrasado{background:#F7E2DC; color:var(--danger);}
-  .badge.fixa{background:#E7EDF1; color:var(--primary);}
-  .badge.variavel{background:#F3EFE6; color:#8A5E17;}
-  .badge.plano{background:#EFE7F1; color:#6B3E7A;}
+  .badge.pendente{background:#241C0A; color:var(--warn);}
+  .badge.pago{background:#132018; color:var(--ok);}
+  .badge.atrasado{background:#271414; color:var(--danger);}
+  .badge.fixa{background:#1A2333; color:var(--primary);}
+  .badge.variavel{background:#242018; color:#D8B463;}
+  .badge.plano{background:#241B29; color:#C084FC;}
   .empty-state{text-align:center; color:var(--ink-faint); padding:34px 0; font-size:14px;}
-  .login-wrap{min-height:100vh; display:flex; align-items:center; justify-content:center; background:var(--primary-dark);}
-  .login-card{background:#fff; border-radius:18px; padding:38px 34px; width:340px; box-shadow:0 20px 60px rgba(0,0,0,.3);}
+  .login-wrap{min-height:100vh; display:flex; align-items:center; justify-content:center; background:var(--bg);}
+  .login-card{background:var(--panel); border:1px solid var(--border); border-radius:18px; padding:38px 34px; width:340px; box-shadow:0 20px 60px rgba(0,0,0,.5);}
   .login-card h1{font-size:20px; margin:0 0 4px;}
   .login-card p{font-size:13.5px; color:var(--ink-soft); margin:0 0 22px;}
   .login-input{width:100%; padding:11px 12px; border:1px solid var(--border); border-radius:9px; font-size:14px; margin-bottom:12px;}
-  .login-error{background:#F7E2DC; color:var(--danger); padding:10px 12px; border-radius:8px; font-size:13px; margin-bottom:12px;}
+  .login-error{background:#271414; color:var(--danger); padding:10px 12px; border-radius:8px; font-size:13px; margin-bottom:12px;}
   .msg{padding:10px 14px; border-radius:8px; font-size:13.5px; margin-top:8px;}
-  .msg.ok{background:#E2F0E8; color:var(--ok);}
-  .msg.err{background:#F7E2DC; color:var(--danger);}
+  .msg.ok{background:#132018; color:var(--ok);}
+  .msg.err{background:#271414; color:var(--danger);}
   .toolbar{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; align-items:center;}
-  .modal-backdrop{position:fixed; inset:0; background:rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; z-index:100; padding:16px;}
-  .modal{background:#fff; border-radius:14px; padding:24px; width:400px; max-width:100%; max-height:90vh; overflow:auto;}
+  .modal-backdrop{position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; z-index:100; padding:16px;}
+  .modal{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:24px; width:400px; max-width:100%; max-height:90vh; overflow:auto;}
   .modal h3{margin-bottom:14px;}
   .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:12px;}
-  .chip{display:inline-flex; align-items:center; gap:6px; background:#F0EEE7; border-radius:20px; padding:5px 12px; font-size:13px; margin:0 6px 6px 0;}
+  .chip{display:inline-flex; align-items:center; gap:6px; background:var(--field-bg); border-radius:20px; padding:5px 12px; font-size:13px; margin:0 6px 6px 0;}
   .chip button{background:none; border:none; color:var(--ink-faint); cursor:pointer; font-size:13px; padding:0;}
   .loading{display:flex; align-items:center; justify-content:center; color:var(--ink-faint); font-size:14px; min-height:180px;}
   .split{display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:16px;}
@@ -90,7 +94,7 @@
   .linha-total:last-child{border-bottom:none;}
   .linha-total.destaque{font-weight:700; font-size:16px; padding-top:11px;}
   .secao-titulo{font-size:12px; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:.04em; margin:22px 0 10px;}
-  .aviso{background:#FBF0DC; border-left:4px solid var(--warn); border-radius:10px; padding:13px 16px; font-size:13.5px; margin-bottom:16px;}
+  .aviso{background:#241C0A; border-left:4px solid var(--warn); border-radius:10px; padding:13px 16px; font-size:13.5px; margin-bottom:16px;}
   @media (max-width:720px){
     .shell{flex-direction:column;}
     .sidebar{width:100%; flex-direction:row; overflow-x:auto; padding:12px;}
@@ -106,6 +110,12 @@
 <div id="app"></div>
 <script>
 const app = document.getElementById('app');
+
+// tema escuro: Chart.js por padrão desenha texto escuro, ajusta pra ficar legível no fundo escuro
+if(typeof Chart !== 'undefined'){
+  Chart.defaults.color = '#9AA2AC';
+  Chart.defaults.borderColor = '#262B33';
+}
 
 const S = {
   token: localStorage.getItem('fin_token') || null,
@@ -271,6 +281,7 @@ function desenhar(){
     {p:'entradas',t:'Entradas'},
     {p:'saidas',t:'Saídas'},
     {p:'planos',t:'Planos'},
+    {p:'agenda',t:'Agenda'},
     {p:'relatorios',t:'Relatórios'},
     {p:'categorias',t:'Categorias'},
     {p:'perfil',t:'Meu perfil'},
@@ -306,7 +317,7 @@ function desenhar(){
   document.getElementById('mesProx').onclick=async()=>{ S.mes=somaMes(S.mes,1); await carregar(); };
 
   const c=document.getElementById('conteudo');
-  ({painel:pgPainel, mes:pgMes, entradas:pgEntradas, saidas:pgSaidas, planos:pgPlanos,
+  ({painel:pgPainel, mes:pgMes, entradas:pgEntradas, saidas:pgSaidas, planos:pgPlanos, agenda:pgAgenda,
     relatorios:pgRelatorios, categorias:pgCategorias, perfil:pgPerfil, usuarios:pgUsuarios}[S.pagina]||pgPainel)(c);
 }
 
@@ -345,9 +356,23 @@ function pgPainel(c){
     ${pendentes.map(p=>`${esc(p.nome)} — ${money(p.valor_total)} a partir de ${dataPt(p.data_inicio)}`).join('<br>')}
   </div>` : '';
 
+  const agendaHoje = (D.agenda||[]).filter(a=>a.data===hoje() && a.status!=='cancelado');
+  const blocoAgendaHoje = agendaHoje.length ? `<div class="panel"><h3>📅 Hoje na agenda</h3>
+    <table><thead><tr><th>Nome</th><th>Detalhe</th><th>Status</th><th></th></tr></thead>
+    <tbody>${agendaHoje.map(a=>{
+      const badge = a.tipo==='compromisso' ? '<span class="badge fixa">Compromisso</span>' : '<span class="badge variavel">Tarefa</span>';
+      const detalhe = a.tipo==='compromisso'
+        ? `${a.local?esc(a.local):''}${a.local&&a.hora?' · ':''}${a.hora?a.hora.slice(0,5):''}`
+        : esc(a.descricao||'');
+      const statusBadge = a.status==='confirmado' ? '<span class="badge pago">Confirmado</span>' : '<span class="badge pendente">Pendente</span>';
+      return `<tr><td><b>${esc(a.nome)}</b> ${badge}</td><td style="font-size:12.5px;color:var(--ink-soft);">${detalhe||'—'}</td><td>${statusBadge}</td>
+        <td>${a.status==='pendente'?`<button class="ghost-btn btnConfAgHoje" data-id="${a.id}">Confirmado</button>`:''}</td></tr>`;
+    }).join('')}</tbody></table></div>` : '';
+
   c.innerHTML=`
     <div class="page-header"><div class="eyebrow">Painel</div><h2>${nomeMes(S.mes)}</h2></div>
     ${avisoPlanos}
+    ${blocoAgendaHoje}
     <div class="stat-grid">
       <div class="stat-card ok"><div class="num">${money(rMeu.pago)}</div><div class="label">Total pago no mês</div></div>
       <div class="stat-card danger"><div class="num">${money(rMeu.aPagar)}</div><div class="label">Ainda a pagar no mês</div></div>
@@ -361,6 +386,10 @@ function pgPainel(c){
       ${temParceiro?blocoResumo(nomeDe(S.eu.parceiro_id), rDela):''}
       ${temParceiro?blocoResumo('Casal (somado)', rTotal):''}
     </div>`;
+
+  c.querySelectorAll('.btnConfAgHoje').forEach(b=>b.onclick=async()=>{
+    await api('agenda.confirmar',{id:b.dataset.id}); await carregar();
+  });
 }
 
 // ================= 02 — PAINEL DO MÊS ======================
@@ -722,12 +751,96 @@ function pgSaidas(c){
 }
 
 // ====================== 05 — PLANOS ========================
+function itensDoPlano(planoId){
+  return (S.dados.planoItens||[]).filter(i=>i.plano_id===planoId);
+}
+
+function itemRowHTML(it){
+  const parcelado = it.forma_pagamento==='parcelado';
+  return `<div class="item-row" style="border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:8px;">
+    <div class="form-row" style="margin-bottom:6px; align-items:flex-end;">
+      <div style="flex:1;">
+        <label class="field-label">Gasto</label>
+        <input class="login-input it-nome" value="${esc(it.nome||'')}" placeholder="Ex: Aparelho, Hotel...">
+      </div>
+      <button type="button" class="danger-btn btn-rm-item">Remover</button>
+    </div>
+    <div class="form-row" style="margin-bottom:0;">
+      <div style="flex:1;">
+        <label class="field-label">Valor (R$)</label>
+        <input class="login-input it-valor" type="number" step="0.01" value="${it.valor||''}">
+      </div>
+      <div style="flex:1;">
+        <label class="field-label">Pagamento</label>
+        <select class="login-input it-forma">
+          <option value="avista" ${!parcelado?'selected':''}>À vista</option>
+          <option value="parcelado" ${parcelado?'selected':''}>Parcelado</option>
+        </select>
+      </div>
+    </div>
+    <div class="it-parc-wrap" style="display:${parcelado?'block':'none'}; margin-top:6px;">
+      <label class="field-label">Quantas vezes?</label>
+      <input class="login-input it-parcelas" type="number" min="2" max="60" value="${it.parcelas>1?it.parcelas:2}">
+    </div>
+  </div>`;
+}
+
+function ligarItens(b, itensIniciais){
+  let itens = itensIniciais.length ? itensIniciais.map(it=>({...it})) : [{nome:'',valor:'',forma_pagamento:'avista',parcelas:2}];
+  const lista = b.querySelector('#pItensLista');
+
+  function lerDom(){
+    return [...lista.querySelectorAll('.item-row')].map(row=>({
+      nome: row.querySelector('.it-nome').value,
+      valor: row.querySelector('.it-valor').value,
+      forma_pagamento: row.querySelector('.it-forma').value,
+      parcelas: row.querySelector('.it-parcelas').value,
+    }));
+  }
+  function atualizarTotal(){
+    let t=0;
+    lista.querySelectorAll('.item-row').forEach(row=>{ t+=Number(row.querySelector('.it-valor').value)||0; });
+    const lbl=b.querySelector('#pTotalLbl'); if(lbl) lbl.textContent=money(t);
+  }
+  function render(){
+    lista.innerHTML = itens.map(it=>itemRowHTML(it)).join('');
+    lista.querySelectorAll('.item-row').forEach((row,idx)=>{
+      row.querySelector('.it-forma').onchange = e=>{
+        row.querySelector('.it-parc-wrap').style.display = e.target.value==='parcelado'?'block':'none';
+        atualizarTotal();
+      };
+      row.querySelector('.it-valor').oninput = atualizarTotal;
+      row.querySelector('.btn-rm-item').onclick = ()=>{
+        itens = lerDom();
+        itens.splice(idx,1);
+        if(!itens.length) itens=[{nome:'',valor:'',forma_pagamento:'avista',parcelas:2}];
+        render();
+      };
+    });
+    atualizarTotal();
+  }
+  b.querySelector('#pAddItem').onclick = ()=>{
+    itens = lerDom();
+    itens.push({nome:'',valor:'',forma_pagamento:'avista',parcelas:2});
+    render();
+  };
+  b._coletarItens = lerDom;
+  render();
+}
+
 function pgPlanos(c){
   const planos=S.dados.planos||[];
   const grupo = st => planos.filter(p=>p.status===st);
+  const detalheItens = p => {
+    const its = itensDoPlano(p.id);
+    if(!its.length) return '';
+    return `<div style="font-size:12px;color:var(--ink-faint); margin-top:4px;">${its.map(i=>
+      `${esc(i.nome)}: ${money(i.valor)}${i.forma_pagamento==='parcelado'?` (${i.parcelas}x de ${money(i.valor/i.parcelas)})`:' à vista'}`
+    ).join(' · ')}</div>`;
+  };
   const tabela = lista => lista.length?`<table><thead><tr><th>Nome</th><th>Resumo</th><th>Valor</th><th>Pagamento</th><th>Início</th><th></th></tr></thead>
     <tbody>${lista.map(p=>`<tr>
-      <td><b>${esc(p.nome)}</b></td>
+      <td><b>${esc(p.nome)}</b>${detalheItens(p)}</td>
       <td style="font-size:12.5px;color:var(--ink-soft);">${esc(p.resumo||'—')}</td>
       <td>${money(p.valor_total)}</td>
       <td>${p.forma_pagamento==='avista'?'À vista':`${p.parcelas}x de ${money(p.valor_total/p.parcelas)}`}</td>
@@ -741,52 +854,51 @@ function pgPlanos(c){
 
   c.innerHTML=`
     <div class="page-header"><div class="eyebrow">Planos</div><h2>Meus planos</h2></div>
-    <p class="hint">Na data de início o plano entra sozinho nas suas contas — à vista vira uma despesa, parcelado vira uma despesa por mês.</p>
+    <p class="hint">Na data de início cada gasto do plano entra sozinho nas suas contas — à vista vira uma despesa, parcelado vira uma despesa por mês.</p>
     <div class="panel"><h3>⏳ Pendentes (ainda não começaram)</h3>${tabela(grupo('pendente'))}
       <div style="margin-top:12px;"><button class="primary-btn" id="btnNovoP">+ Novo plano</button></div></div>
     <div class="panel"><h3>▶️ Ativos (já entraram nas contas)</h3>${tabela(grupo('ativo'))}</div>
     <div class="panel"><h3>✅ Concluídos</h3>${tabela(grupo('concluido'))}</div>`;
 
   const formP = (p={}) => `
-    <label class="field-label">Nome</label>
-    <input class="login-input" id="pNome" value="${esc(p.nome||'')}" placeholder="Ex: Trocar o carro">
-    <label class="field-label">Resumo</label>
+    <label class="field-label">Nome do plano</label>
+    <input class="login-input" id="pNome" value="${esc(p.nome||'')}" placeholder="Ex: Ar condicionado, Viagem...">
+    <label class="field-label">Resumo (opcional)</label>
     <textarea class="login-input" id="pResumo" rows="2">${esc(p.resumo||'')}</textarea>
-    <label class="field-label">Valor total (R$)</label>
-    <input class="login-input" id="pValor" type="number" step="0.01" value="${p.valor_total||''}">
-    <label class="field-label">Pagamento</label>
-    <select class="login-input" id="pForma">
-      <option value="avista" ${p.forma_pagamento==='avista'?'selected':''}>À vista</option>
-      <option value="parcelado" ${p.forma_pagamento==='parcelado'?'selected':''}>Parcelado</option>
-    </select>
-    <div id="pBlocoParc" style="display:${p.forma_pagamento==='parcelado'?'block':'none'};">
-      <label class="field-label">Quantas vezes?</label>
-      <input class="login-input" id="pParcelas" type="number" min="2" max="60" value="${p.parcelas>1?p.parcelas:12}">
-    </div>
     <label class="field-label">Data de início</label>
-    <input class="login-input" id="pData" type="date" value="${p.data_inicio||hoje()}">`;
+    <input class="login-input" id="pData" type="date" value="${p.data_inicio||hoje()}">
+    <div class="secao-titulo" style="margin:16px 0 4px;">Gastos desse plano</div>
+    <p class="hint" style="margin-top:0;">Quais despesas você vai ter pra executar esse plano? Adicione uma por uma.</p>
+    <div id="pItensLista"></div>
+    <button type="button" class="ghost-btn" id="pAddItem" style="margin:2px 0 12px;">+ Adicionar gasto</button>
+    <div class="linha-total destaque"><span>Total do plano</span><b id="pTotalLbl">${money(0)}</b></div>`;
 
-  const ligarForma = b => {
-    b.querySelector('#pForma').onchange = e => {
-      b.querySelector('#pBlocoParc').style.display = e.target.value==='parcelado'?'block':'none';
-    };
-  };
   const salvarP = id => async b => {
     const nome=b.querySelector('#pNome').value.trim();
-    const valor=b.querySelector('#pValor').value;
-    if(!nome || !Number(valor)) throw new Error('Preencha nome e valor.');
-    await api('plano.salvar',{
-      id, nome, resumo:b.querySelector('#pResumo').value.trim(), valor_total:valor,
-      forma_pagamento:b.querySelector('#pForma').value,
-      parcelas:b.querySelector('#pParcelas')?b.querySelector('#pParcelas').value:1,
+    if(!nome) throw new Error('Preencha o nome do plano.');
+    const itens = b._coletarItens()
+      .filter(it=>it.nome && it.nome.trim() && Number(it.valor)>0)
+      .map(it=>({nome:it.nome.trim(), valor:it.valor, forma_pagamento:it.forma_pagamento, parcelas:it.parcelas}));
+    if(!itens.length) throw new Error('Adicione pelo menos um gasto pra executar o plano.');
+    const r = await api('plano.salvar',{
+      id, nome, resumo:b.querySelector('#pResumo').value.trim(),
       data_inicio:b.querySelector('#pData').value,
+      itens,
     });
+    if(r && r.ok===false) throw new Error(r.message||'Não deu pra salvar o plano.');
   };
 
-  document.getElementById('btnNovoP').onclick=()=>ligarForma(modal('Novo plano', formP(), salvarP(null)));
+  document.getElementById('btnNovoP').onclick=()=>{
+    const b=modal('Novo plano', formP(), salvarP(null));
+    ligarItens(b, []);
+  };
   c.querySelectorAll('.btnEdP').forEach(b=>b.onclick=()=>{
     const p=planos.find(x=>x.id===b.dataset.id);
-    ligarForma(modal('Editar plano', formP(p), salvarP(p.id)));
+    const its=itensDoPlano(p.id);
+    const iniciais = its.length ? its.map(i=>({nome:i.nome, valor:i.valor, forma_pagamento:i.forma_pagamento, parcelas:i.parcelas}))
+      : [{nome:p.nome, valor:p.valor_total, forma_pagamento:p.forma_pagamento, parcelas:p.parcelas}];
+    const bm=modal('Editar plano', formP(p), salvarP(p.id));
+    ligarItens(bm, iniciais);
   });
   c.querySelectorAll('.btnAdiar').forEach(b=>b.onclick=()=>{
     const p=planos.find(x=>x.id===b.dataset.id);
@@ -804,6 +916,114 @@ function pgPlanos(c){
   c.querySelectorAll('.btnDelP').forEach(b=>b.onclick=async()=>{
     if(!(await confirmar('Excluir esse plano? As despesas já geradas continuam lá.'))) return;
     await api('plano.excluir',{id:b.dataset.id}); await carregar();
+  });
+}
+
+// ======================= AGENDA =============================
+function linhaAgenda(a){
+  const badge = a.tipo==='compromisso' ? '<span class="badge fixa">Compromisso</span>' : '<span class="badge variavel">Tarefa</span>';
+  const statusBadge = a.status==='confirmado' ? '<span class="badge pago">Confirmado</span>'
+    : a.status==='cancelado' ? '<span class="badge atrasado">Cancelado</span>'
+    : '<span class="badge pendente">Pendente</span>';
+  const detalhe = a.tipo==='compromisso'
+    ? `${a.local?esc(a.local):''}${a.local&&a.hora?' · ':''}${a.hora?a.hora.slice(0,5):''}`
+    : esc(a.descricao||'');
+  return `<tr>
+    <td><b>${esc(a.nome)}</b> ${badge}</td>
+    <td style="font-size:12.5px;color:var(--ink-soft);">${detalhe||'—'}</td>
+    <td>${dataPt(a.data)}</td>
+    <td>${statusBadge}</td>
+    <td style="white-space:nowrap;">
+      ${a.status==='pendente'?`<button class="ghost-btn btnConfAg" data-id="${a.id}">Confirmado</button>
+      <button class="ghost-btn btnProrrAg" data-id="${a.id}">Prorrogar</button>
+      <button class="danger-btn btnCancAg" data-id="${a.id}">Cancelar</button>`:''}
+    </td>
+  </tr>`;
+}
+
+function formAgenda(a={}){
+  const tipo = a.tipo || 'compromisso';
+  return `
+    <label class="field-label">Tipo</label>
+    <select class="login-input" id="agTipo">
+      <option value="compromisso" ${tipo==='compromisso'?'selected':''}>Compromisso</option>
+      <option value="tarefa" ${tipo==='tarefa'?'selected':''}>Tarefa</option>
+    </select>
+    <label class="field-label">Nome</label>
+    <input class="login-input" id="agNome" value="${esc(a.nome||'')}" placeholder="Ex: Reunião com o banco">
+    <div id="agBlocoCompromisso" style="display:${tipo==='compromisso'?'block':'none'};">
+      <label class="field-label">Local</label>
+      <input class="login-input" id="agLocal" value="${esc(a.local||'')}">
+      <label class="field-label">Hora</label>
+      <input class="login-input" id="agHora" type="time" value="${a.hora?a.hora.slice(0,5):''}">
+    </div>
+    <div id="agBlocoTarefa" style="display:${tipo==='tarefa'?'block':'none'};">
+      <label class="field-label">Descrição</label>
+      <textarea class="login-input" id="agDesc" rows="2">${esc(a.descricao||'')}</textarea>
+    </div>
+    <label class="field-label">Data</label>
+    <input class="login-input" id="agData" type="date" value="${a.data||hoje()}">`;
+}
+
+function pgAgenda(c){
+  const todos = (S.dados.agenda||[]).slice().sort((a,b)=>a.data<b.data?-1:(a.data>b.data?1:0));
+  const porData = {};
+  todos.forEach(a=>{ (porData[a.data]=porData[a.data]||[]).push(a); });
+  const datas = Object.keys(porData).sort();
+
+  const blocos = datas.length ? datas.map(dt=>`
+    <div class="panel">
+      <h3>${dataPt(dt)}</h3>
+      <table><thead><tr><th>Nome</th><th>Detalhe</th><th>Data</th><th>Status</th><th></th></tr></thead>
+        <tbody>${porData[dt].map(linhaAgenda).join('')}</tbody></table>
+    </div>`).join('') : `<div class="empty-state">Nada na agenda ainda.</div>`;
+
+  c.innerHTML=`
+    <div class="page-header"><div class="eyebrow">Agenda</div><h2>Compromissos e tarefas</h2></div>
+    <p class="hint">Cancelado não é excluído — só some do painel e fica aqui pra histórico.</p>
+    <div style="margin-bottom:16px;"><button class="primary-btn" id="btnNovoAg">+ Novo compromisso/tarefa</button></div>
+    ${blocos}`;
+
+  const ligarTipoAg = b => {
+    b.querySelector('#agTipo').onchange = e=>{
+      const compromisso = e.target.value==='compromisso';
+      b.querySelector('#agBlocoCompromisso').style.display = compromisso?'block':'none';
+      b.querySelector('#agBlocoTarefa').style.display = compromisso?'none':'block';
+    };
+  };
+  const salvarAg = id => async b=>{
+    const tipo=b.querySelector('#agTipo').value;
+    const nome=b.querySelector('#agNome').value.trim();
+    const data=b.querySelector('#agData').value;
+    if(!nome || !data) throw new Error('Preencha nome e data.');
+    await api('agenda.salvar',{
+      id, tipo, nome, data,
+      local: tipo==='compromisso'?b.querySelector('#agLocal').value.trim():'',
+      hora: tipo==='compromisso'?b.querySelector('#agHora').value:'',
+      descricao: tipo==='tarefa'?b.querySelector('#agDesc').value.trim():'',
+    });
+  };
+
+  document.getElementById('btnNovoAg').onclick=()=>{
+    const b=modal('Novo compromisso ou tarefa', formAgenda(), salvarAg(null));
+    ligarTipoAg(b);
+  };
+  c.querySelectorAll('.btnConfAg').forEach(b=>b.onclick=async()=>{
+    await api('agenda.confirmar',{id:b.dataset.id}); await carregar();
+  });
+  c.querySelectorAll('.btnCancAg').forEach(b=>b.onclick=async()=>{
+    if(!(await confirmar('Cancelar esse item? Ele fica no histórico, só some do painel.'))) return;
+    await api('agenda.cancelar',{id:b.dataset.id}); await carregar();
+  });
+  c.querySelectorAll('.btnProrrAg').forEach(b=>b.onclick=()=>{
+    const a=todos.find(x=>x.id===b.dataset.id);
+    modal('Prorrogar', `
+      <p class="hint">Escolha a nova data de "${esc(a.nome)}".</p>
+      <label class="field-label">Nova data</label>
+      <input class="login-input" id="prData" type="date" value="${a.data}">
+    `, async b2=>{
+      await api('agenda.prorrogar',{id:a.id, nova_data:b2.querySelector('#prData').value});
+    }, 'Prorrogar');
   });
 }
 
@@ -859,7 +1079,7 @@ function pgRelatorios(c){
 
   new Chart(document.getElementById('gCat'),{
     type:'bar',
-    data:{labels:cats.map(x=>x[0]), datasets:[{label:'Gasto', data:cats.map(x=>x[1]), backgroundColor:'#1B3A4B'}]},
+    data:{labels:cats.map(x=>x[0]), datasets:[{label:'Gasto', data:cats.map(x=>x[1]), backgroundColor:'#3B82F6'}]},
     options:{plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:v=>money(v)}}}}
   });
 
@@ -870,8 +1090,8 @@ function pgRelatorios(c){
     new Chart(document.getElementById('gAno'),{
       type:'line',
       data:{labels:meses.map(m=>nomeMes(m).split(' de ')[0]), datasets:[
-        {label:'Entradas', data:ent, borderColor:'#2F7D5A', backgroundColor:'#2F7D5A', tension:.3},
-        {label:'Saídas', data:sai, borderColor:'#B5482F', backgroundColor:'#B5482F', tension:.3},
+        {label:'Entradas', data:ent, borderColor:'#4ADE80', backgroundColor:'#4ADE80', tension:.3},
+        {label:'Saídas', data:sai, borderColor:'#F87171', backgroundColor:'#F87171', tension:.3},
       ]},
       options:{scales:{y:{ticks:{callback:v=>money(v)}}}}
     });

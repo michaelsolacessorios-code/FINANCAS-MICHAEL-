@@ -838,19 +838,26 @@ function pgPlanos(c){
       `${esc(i.nome)}: ${money(i.valor)}${i.forma_pagamento==='parcelado'?` (${i.parcelas}x de ${money(i.valor/i.parcelas)})`:' à vista'}`
     ).join(' · ')}</div>`;
   };
-  const tabela = lista => lista.length?`<table><thead><tr><th>Nome</th><th>Resumo</th><th>Valor</th><th>Pagamento</th><th>Início</th><th></th></tr></thead>
-    <tbody>${lista.map(p=>`<tr>
-      <td><b>${esc(p.nome)}</b>${detalheItens(p)}</td>
-      <td style="font-size:12.5px;color:var(--ink-soft);">${esc(p.resumo||'—')}</td>
-      <td>${money(p.valor_total)}</td>
-      <td>${p.forma_pagamento==='avista'?'À vista':`${p.parcelas}x de ${money(p.valor_total/p.parcelas)}`}</td>
-      <td>${dataPt(p.data_inicio)}</td>
-      <td style="white-space:nowrap;">
+  const tabela = lista => lista.length?lista.map(p=>`
+    <div class="plano-card" style="background:var(--field-bg); border:1px solid var(--border); border-radius:12px; padding:16px 18px; margin-bottom:10px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap;">
+        <div style="min-width:180px;">
+          <div style="font-size:15.5px; font-weight:700;">${esc(p.nome)}</div>
+          ${p.resumo?`<div class="hint" style="margin:2px 0 0;">${esc(p.resumo)}</div>`:''}
+          ${detalheItens(p)}
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:19px; font-weight:700;">${money(p.valor_total)}</div>
+          <div class="hint" style="margin:2px 0 0;">${p.forma_pagamento==='avista'?'À vista':`${p.parcelas}x de ${money(p.valor_total/p.parcelas)}`} · início ${dataPt(p.data_inicio)}</div>
+        </div>
+      </div>
+      <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
         ${p.status==='pendente'?`<button class="ghost-btn btnAdiar" data-id="${p.id}">Adiar</button>
         <button class="ghost-btn btnEdP" data-id="${p.id}">Editar</button>`:''}
         ${p.status==='ativo'?`<button class="ghost-btn btnConcluir" data-id="${p.id}">Concluir</button>`:''}
         <button class="danger-btn btnDelP" data-id="${p.id}">Excluir</button>
-      </td></tr>`).join('')}</tbody></table>`:`<div class="empty-state">Nenhum plano aqui.</div>`;
+      </div>
+    </div>`).join(''):`<div class="empty-state">Nenhum plano aqui.</div>`;
 
   c.innerHTML=`
     <div class="page-header"><div class="eyebrow">Planos</div><h2>Meus planos</h2></div>

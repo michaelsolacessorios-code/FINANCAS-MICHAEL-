@@ -350,7 +350,7 @@ module.exports = async (req, res) => {
     }
 
     if (acao === 'agenda.confirmar') {
-      await update('fin_agenda', `id=eq.${d.id}&${meu}`, { status: 'confirmado' });
+      await update('fin_agenda', `id=eq.${d.id}&${meu}`, { status: 'confirmado', concluido_em: new Date().toISOString() });
       return res.json({ ok: true });
     }
 
@@ -361,7 +361,8 @@ module.exports = async (req, res) => {
     }
 
     if (acao === 'agenda.prorrogar') {
-      await update('fin_agenda', `id=eq.${d.id}&${meu}`, { data: d.nova_data, status: 'pendente' });
+      // prorrogar reabre o item (se tinha sido confirmado/cancelado por engano) e limpa a data de conclusão
+      await update('fin_agenda', `id=eq.${d.id}&${meu}`, { data: d.nova_data, status: 'pendente', concluido_em: null });
       return res.json({ ok: true });
     }
 

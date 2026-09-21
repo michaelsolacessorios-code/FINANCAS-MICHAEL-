@@ -1,3 +1,5 @@
+
+Data · JS
 // =====================================================================
 // POST /api/data  { acao, ... }
 // Rota única do app. TUDO passa por aqui e TUDO é filtrado pelo usuário
@@ -8,37 +10,37 @@ const {
   select, insert, update, remover, rpc,
   gerarHashSenha, usuarioLogado, lerCorpo, primeiroDiaDoMes,
 } = require('./_lib');
-
+ 
 const uuid = (v) => /^[0-9a-f-]{36}$/i.test(String(v || ''));
-
+ 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST.' });
-
+ 
   try {
     const corpo = lerCorpo(req);
     const eu = await usuarioLogado(req);
     if (!eu) return res.status(401).json({ error: 'Sessão expirada. Entre de novo.' });
-
+ 
     const meu = `user_id=eq.${eu.id}`;
     const acao = corpo.acao;
     const d = corpo.dados || {};
-
+ 
     // -----------------------------------------------------------------
     // LEITURA DO MÊS
     // -----------------------------------------------------------------
     if (acao === 'mes') {
       const mesRef = primeiroDiaDoMes(d.mes);
-
+ 
       // ativa planos vencidos e gera as linhas fixas do mês
       await rpc('fin_ativar_planos').catch(() => {});
       await rpc('fin_gerar_mes', { p_user: eu.id, p_mes: mesRef }).catch(() => {});
       if (eu.parceiro_id) {
         await rpc('fin_gerar_mes', { p_user: eu.parceiro_id, p_mes: mesRef }).catch(() => {});
       }
-
+ 
       const ids = [eu.id, eu.parceiro_id].filter(Boolean);
       const filtroDupla = `user_id=in.(${ids.join(',')})`;
-
+ 
       const [entradas, saidas, futuras, categorias, contasFixas, entradasFixas, planos, usuarios] =
         await Promise.all([
           select('fin_entradas', `${filtroDupla}&mes_ref=eq.${mesRef}&select=*&order=data`),
@@ -51,13 +53,13 @@ module.exports = async (req, res) => {
           select('fin_planos', `${meu}&select=*&order=data_inicio`),
           select('fin_usuarios', 'select=id,nome,usuario,admin,foto,parceiro_id&order=created_at'),
         ]);
-
+ 
       return res.json({
         ok: true, eu, mes: mesRef,
         entradas, saidas, futuras, categorias, contasFixas, entradasFixas, planos, usuarios,
       });
     }
-
+ 
     // -----------------------------------------------------------------
     // ANO INTEIRO (gráfico de evolução)
     // -----------------------------------------------------------------
@@ -72,7 +74,7 @@ module.exports = async (req, res) => {
       ]);
       return res.json({ ok: true, entradas, saidas });
     }
-
+ 
     // -----------------------------------------------------------------
     // ENTRADAS
     // -----------------------------------------------------------------
@@ -89,12 +91,12 @@ module.exports = async (req, res) => {
       }
       return res.json({ ok: true });
     }
-
+ 
     if (acao === 'entrada.excluir') {
       await remover('fin_entradas', `id=eq.${d.id}&${meu}`);
       return res.json({ ok: true });
     }
-
+ 
     if (acao === 'entradaFixa.salvar') {
       const linha = {
         tipo: d.tipo, descricao: d.descricao,
@@ -109,12 +111,12 @@ module.exports = async (req, res) => {
       await rpc('fin_gerar_mes', { p_user: eu.id, p_mes: primeiroDiaDoMes(d.mes) }).catch(() => {});
       return res.json({ ok: true });
     }
-
+ 
     if (acao === 'entradaFixa.excluir') {
       await remover('fin_entradas_fixas', `id=eq.${d.id}&${meu}`);
       return res.json({ ok: true });
     }
-
+ 
     // -----------------------------------------------------------------
     // SAÍDAS
     // -----------------------------------------------------------------
@@ -126,10 +128,10 @@ module.exports = async (req, res) => {
         });
         return res.json({ ok: true });
       }
-
+ 
       const parcelas = Math.max(1, Number(d.parcelas) || 1);
       const [a, m, dia] = String(d.data).split('-').map(Number);
-
+ 
       if (parcelas === 1) {
         await insert('fin_saidas', {
           user_id: eu.id, nome: d.nome, categoria: d.categoria,
@@ -158,7 +160,27 @@ module.exports = async (req, res) => {
       }
       return res.json({ ok: true });
     }
-
+ 
+    // Edita nome/categoria/valor de TODAS as parcelas de um grupo de uma vez.
+    // O valor informado é o valor de CADA parcela (não o total) — mantém
+    // as datas e o status de pago/não pago como já estavam.
+    if (acao === 'saida.editarGrupo') {
+      if (!uuid(d.grupo_id)) return res.json({ ok: false, message: 'Parcelamento inválido.' });
+      const linhas = await select(
+        'fin_saidas',
+        `grupo_id=eq.${d.grupo_id}&${meu}&select=id,parcela_atual,total_parcelas&order=parcela_atual`
+      );
+      if (!linhas || !linhas.length) {
+        return res.json({ ok: false, message: 'Não achei essas parcelas.' });
+      }
+      await Promise.all(linhas.map(l => update('fin_saidas', `id=eq.${l.id}&${meu}`, {
+        nome: `${d.nome} (${l.parcela_atual}/${l.total_parcelas})`,
+        categoria: d.categoria,
+        valor: Number(d.valor),
+      })));
+      return res.json({ ok: true, atualizadas: linhas.length });
+    }
+ 
     if (acao === 'saida.pago') {
       await update('fin_saidas', `id=eq.${d.id}&${meu}`, {
         pago: !!d.pago,
@@ -166,7 +188,7 @@ module.exports = async (req, res) => {
       });
       return res.json({ ok: true });
     }
-
+ 
     if (acao === 'saida.excluir') {
       if (d.grupoTodo && uuid(d.grupo_id)) {
         await remover('fin_saidas', `grupo_id=eq.${d.grupo_id}&${meu}`);
@@ -175,7 +197,7 @@ module.exports = async (req, res) => {
       }
       return res.json({ ok: true });
     }
-
+ 
     // -----------------------------------------------------------------
     // CONTAS FIXAS
     // -----------------------------------------------------------------
@@ -193,13 +215,13 @@ module.exports = async (req, res) => {
       await rpc('fin_gerar_mes', { p_user: eu.id, p_mes: primeiroDiaDoMes(d.mes) }).catch(() => {});
       return res.json({ ok: true });
     }
-
+ 
     if (acao === 'contaFixa.excluir') {
       // apaga o modelo e as linhas dos meses (cascade no banco)
       await remover('fin_contas_fixas', `id=eq.${d.id}&${meu}`);
       return res.json({ ok: true });
     }
-
+ 
     // -----------------------------------------------------------------
     // PLANOS
     // -----------------------------------------------------------------
@@ -217,24 +239,24 @@ module.exports = async (req, res) => {
       }
       return res.json({ ok: true });
     }
-
+ 
     if (acao === 'plano.adiar') {
       await update('fin_planos', `id=eq.${d.id}&${meu}`, {
         data_inicio: d.nova_data, status: 'pendente',
       });
       return res.json({ ok: true });
     }
-
+ 
     if (acao === 'plano.concluir') {
       await update('fin_planos', `id=eq.${d.id}&${meu}`, { status: 'concluido' });
       return res.json({ ok: true });
     }
-
+ 
     if (acao === 'plano.excluir') {
       await remover('fin_planos', `id=eq.${d.id}&${meu}`);
       return res.json({ ok: true });
     }
-
+ 
     // -----------------------------------------------------------------
     // CATEGORIAS
     // -----------------------------------------------------------------
@@ -244,12 +266,12 @@ module.exports = async (req, res) => {
       }).catch(() => {});
       return res.json({ ok: true });
     }
-
+ 
     if (acao === 'categoria.excluir') {
       await remover('fin_categorias', `id=eq.${d.id}&${meu}`);
       return res.json({ ok: true });
     }
-
+ 
     // -----------------------------------------------------------------
     // PERFIL / USUÁRIOS
     // -----------------------------------------------------------------
@@ -257,15 +279,15 @@ module.exports = async (req, res) => {
       await update('fin_usuarios', `id=eq.${eu.id}`, { foto: d.foto });
       return res.json({ ok: true });
     }
-
+ 
     if (acao === 'perfil.senha') {
       await update('fin_usuarios', `id=eq.${eu.id}`, { senha: gerarHashSenha(d.senha) });
       return res.json({ ok: true });
     }
-
+ 
     // daqui pra baixo, só admin
     if (!eu.admin) return res.status(403).json({ error: 'Só o administrador pode fazer isso.' });
-
+ 
     if (acao === 'usuario.criar') {
       const login = String(d.usuario).trim().toLowerCase();
       const jaTem = await select('fin_usuarios', `usuario=eq.${encodeURIComponent(login)}&select=id`);
@@ -277,18 +299,18 @@ module.exports = async (req, res) => {
       });
       return res.json({ ok: true });
     }
-
+ 
     if (acao === 'usuario.senha') {
       await update('fin_usuarios', `id=eq.${d.id}`, { senha: gerarHashSenha(d.senha) });
       return res.json({ ok: true });
     }
-
+ 
     if (acao === 'usuario.excluir') {
       if (d.id === eu.id) return res.json({ ok: false, message: 'Você não pode se remover.' });
       await remover('fin_usuarios', `id=eq.${d.id}`);
       return res.json({ ok: true });
     }
-
+ 
     // Vincular/desvincular casal (liga os dois lados de uma vez)
     if (acao === 'usuario.vincular') {
       const a = d.id_1, b = d.id_2;
@@ -304,9 +326,13 @@ module.exports = async (req, res) => {
       await update('fin_usuarios', `id=eq.${b}`, { parceiro_id: a });
       return res.json({ ok: true });
     }
-
+ 
     return res.status(400).json({ error: `Ação desconhecida: ${acao}` });
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
 };
+ 
+
+index_4.html baixado Mostrar no Explorer
+

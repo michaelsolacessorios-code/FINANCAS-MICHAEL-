@@ -137,6 +137,8 @@ module.exports = async (req, res) => {
         await insert('fin_saidas', {
           user_id: eu.id, nome: d.nome, categoria: d.categoria,
           valor: Number(d.valor), data: d.data, mes_ref: primeiroDiaDoMes(d.data),
+          // gasto rápido (pedágio, gasolina...) já nasce pago
+          ...(d.pago ? { pago: true, data_pagamento: d.data } : {}),
         });
       } else {
         const valorParcela = Math.round((Number(d.valor) / parcelas) * 100) / 100;

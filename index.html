@@ -6,47 +6,53 @@
 <title>Finanças — Contas Pessoais</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root{
-    --bg:#0E1116; --panel:#171B22; --ink:#E7E9EC; --ink-soft:#9AA2AC; --ink-faint:#6B7280;
-    --border:#262B33; --primary:#3B82F6; --primary-dark:#2563EB; --accent:#3B82F6;
-    --ok:#4ADE80; --danger:#F87171; --warn:#FBBF24;
-    --sidebar-bg:#15191F; --sidebar-text:#9AA2AC; --field-bg:#1B212B;
+    --bg:#F2F3F7; --panel:#FFFFFF; --ink:#111827; --ink-soft:#6B7280; --ink-faint:#9CA3AF;
+    --border:#E5E7EB; --primary:#4F46E5; --primary-dark:#4338CA; --accent:#4F46E5;
+    --ok:#059669; --danger:#DC2626; --warn:#D97706;
+    --sidebar-bg:#1E1B4B; --sidebar-text:#A5A3D6; --field-bg:#F9FAFB;
+    --hover:#F9FAFB; --sel:#EEF2FF; --shadow:0 1px 2px rgba(17,24,39,.05), 0 1px 3px rgba(17,24,39,.04);
   }
   *{box-sizing:border-box;}
-  body{margin:0; font-family:'Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink);}
+  body{margin:0; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink); font-feature-settings:'tnum';}
   .shell{display:flex; min-height:100vh;}
   .sidebar{width:230px; background:var(--sidebar-bg); color:var(--sidebar-text); flex-shrink:0; padding:22px 0; display:flex; flex-direction:column;}
-  .sidebar .brand{padding:0 20px 22px; font-size:17px; font-weight:700; display:flex; align-items:center; gap:8px; border-bottom:1px solid rgba(255,255,255,.1); margin-bottom:12px;}
+  .sidebar .brand{padding:0 20px 22px; font-size:17px; font-weight:700; color:#fff; display:flex; align-items:center; gap:8px; border-bottom:1px solid rgba(255,255,255,.1); margin-bottom:12px;}
   .sidebar .brand span.dot{width:9px; height:9px; border-radius:50%; background:var(--accent); display:inline-block;}
-  .nav-section{padding:14px 22px 6px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-faint);}
+  .sidebar .brand span.dot{background:#A5B4FC;}
+  .nav-section{padding:14px 22px 6px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:#6E6BA8;}
   .nav-item{display:flex; align-items:center; gap:10px; margin:1px 10px; padding:9px 12px; border-radius:8px; cursor:pointer; font-size:14px; color:var(--sidebar-text); transition:.15s;}
   .nav-item i{font-size:18px;}
   .nav-item:hover{background:rgba(255,255,255,.06); color:#fff;}
-  .nav-item.active{background:rgba(59,130,246,.16); color:#fff; font-weight:600;}
-  .nav-item.active i{color:var(--primary);}
-  .hero{display:flex; justify-content:space-between; align-items:center; gap:24px; flex-wrap:wrap; padding:22px 24px;}
-  .hero .big{font-size:34px; font-weight:700; line-height:1.15;}
+  .nav-item.active{background:#312E81; color:#fff; font-weight:600;}
+  .nav-item.active i{color:#A5B4FC;}
+  /* faixa colorida do saldo; os cards sobem por cima dela */
+  .hero{display:flex; justify-content:space-between; align-items:flex-start; gap:24px; flex-wrap:wrap; padding:24px 26px 64px; background:var(--primary); color:#fff; border-radius:18px;}
+  .hero .field-label, .hero .hint{color:rgba(255,255,255,.75);}
+  .hero .big{font-size:36px; font-weight:700; line-height:1.15; letter-spacing:-.02em;}
+  .hero .big.negativo{color:#FECACA;}
   .hero .prog-wrap{flex:1; min-width:220px; max-width:360px;}
-  .progress{height:8px; background:var(--field-bg); border-radius:4px; overflow:hidden; margin-top:6px;}
-  .progress i{display:block; height:100%; background:var(--ok); border-radius:4px;}
+  .progress{height:8px; background:rgba(255,255,255,.22); border-radius:4px; overflow:hidden; margin-top:8px;}
+  .progress i{display:block; height:100%; background:#fff; border-radius:4px;}
+  .hero + .stat-grid{margin-top:-44px; padding:0 14px; position:relative;}
   .stat-card.click{cursor:pointer; transition:.15s; position:relative;}
-  .stat-card.click:hover{background:#1C212A;}
+  .stat-card.click:hover{border-color:#C7D2FE;}
   .stat-card.click .ver{position:absolute; top:14px; right:14px; font-size:12px; color:var(--ink-faint);}
-  .stat-card.sel{background:#1C2330; border-color:var(--primary);}
+  .stat-card.sel{background:var(--sel); border-color:var(--primary);}
   .lista-contas td.acao{text-align:right; white-space:nowrap;}
-  .pagar-btn{display:inline-flex; align-items:center; gap:6px; background:var(--ok); color:#0E1116; border:none; padding:7px 12px; border-radius:7px; font-size:13px; font-weight:600; cursor:pointer;}
+  .pagar-btn{display:inline-flex; align-items:center; gap:6px; background:var(--ok); color:#fff; border:none; padding:7px 12px; border-radius:7px; font-size:13px; font-weight:600; cursor:pointer;}
   .pagar-btn:hover{filter:brightness(1.1);}
   .pagar-btn:disabled{opacity:.5; cursor:default;}
-  .fab{position:fixed; right:24px; bottom:24px; z-index:50; display:inline-flex; align-items:center; gap:8px; background:var(--primary); color:#fff; border:none; border-radius:30px; padding:14px 20px; font-size:15px; font-weight:600; font-family:inherit; cursor:pointer; box-shadow:0 8px 24px rgba(0,0,0,.45);}
+  .fab{position:fixed; right:24px; bottom:24px; z-index:50; display:inline-flex; align-items:center; gap:8px; background:var(--primary); color:#fff; border:none; border-radius:30px; padding:14px 20px; font-size:15px; font-weight:600; font-family:inherit; cursor:pointer; box-shadow:0 8px 24px rgba(79,70,229,.35);}
   .fab:hover{background:var(--primary-dark);}
   .fab i{font-size:20px;}
   .atalhos{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px;}
   .atalho{display:inline-flex; align-items:center; gap:6px; background:var(--field-bg); border:1px solid var(--border); color:var(--ink); border-radius:20px; padding:7px 12px; font-size:13px; font-family:inherit; cursor:pointer;}
-  .atalho:hover, .atalho.sel{border-color:var(--primary); color:#fff;}
+  .atalho:hover, .atalho.sel{border-color:var(--primary); color:var(--primary); background:var(--sel);}
   .valor-rapido{width:100%; font-size:26px; font-weight:700; padding:12px; margin-bottom:12px;}
   .main{flex:1; padding:26px 32px 96px; max-width:1180px;}
   .topbar{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:18px; flex-wrap:wrap;}
@@ -64,14 +70,14 @@
   .eyebrow{font-size:12px; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:.04em;}
   h2{margin:2px 0 0; font-size:24px; text-transform:capitalize;}
   h3{margin:0 0 10px; font-size:16px;}
-  .panel{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:20px; margin-bottom:18px;}
+  .panel{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:20px; margin-bottom:18px; box-shadow:var(--shadow);}
   .hint{font-size:13px; color:var(--ink-soft); margin:0 0 12px;}
   .stat-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:14px; margin-bottom:22px;}
-  .stat-card{background:var(--panel); border:1px solid var(--border); border-left:4px solid var(--primary); border-radius:12px; padding:16px 18px;}
-  .stat-card.ok{border-left-color:var(--ok);}
-  .stat-card.danger{border-left-color:var(--danger);}
-  .stat-card.warn{border-left-color:var(--warn);}
-  .stat-card .num{font-size:22px; font-weight:700;}
+  .stat-card{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:16px 18px; box-shadow:0 4px 14px rgba(17,24,39,.06);}
+  .stat-card.ok .num{color:var(--ok);}
+  .stat-card.danger .num{color:var(--danger);}
+  .stat-card.warn .num{color:var(--warn);}
+  .stat-card .num{font-size:22px; font-weight:700; letter-spacing:-.01em;}
   .stat-card .label{font-size:12.5px; color:var(--ink-soft); margin-top:3px;}
   .form-row{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px; align-items:flex-end;}
   .form-row > div{display:flex; flex-direction:column; gap:4px;}
@@ -89,24 +95,24 @@
   td{padding:10px; border-bottom:1px solid var(--border); vertical-align:middle;}
   tr:last-child td{border-bottom:none;}
   .badge{display:inline-block; padding:3px 10px; border-radius:20px; font-size:11.5px; font-weight:600;}
-  .badge.pendente{background:#241C0A; color:var(--warn);}
-  .badge.pago{background:#132018; color:var(--ok);}
-  .badge.atrasado{background:#271414; color:var(--danger);}
-  .badge.fixa{background:#1A2333; color:var(--primary);}
-  .badge.variavel{background:#242018; color:#D8B463;}
-  .badge.plano{background:#241B29; color:#C084FC;}
+  .badge.pendente{background:#FEF3C7; color:var(--warn);}
+  .badge.pago{background:#D1FAE5; color:var(--ok);}
+  .badge.atrasado{background:#FEE2E2; color:var(--danger);}
+  .badge.fixa{background:#E0E7FF; color:var(--primary);}
+  .badge.variavel{background:#FFEDD5; color:#C2410C;}
+  .badge.plano{background:#F3E8FF; color:#7E22CE;}
   .empty-state{text-align:center; color:var(--ink-faint); padding:34px 0; font-size:14px;}
-  .login-wrap{min-height:100vh; display:flex; align-items:center; justify-content:center; background:var(--bg);}
-  .login-card{background:var(--panel); border:1px solid var(--border); border-radius:18px; padding:38px 34px; width:340px; box-shadow:0 20px 60px rgba(0,0,0,.5);}
+  .login-wrap{min-height:100vh; display:flex; align-items:center; justify-content:center; background:var(--sidebar-bg);}
+  .login-card{background:var(--panel); border:1px solid var(--border); border-radius:18px; padding:38px 34px; width:340px; box-shadow:0 24px 60px rgba(15,12,60,.45);}
   .login-card h1{font-size:20px; margin:0 0 4px;}
   .login-card p{font-size:13.5px; color:var(--ink-soft); margin:0 0 22px;}
   .login-input{width:100%; padding:11px 12px; border:1px solid var(--border); border-radius:9px; font-size:14px; margin-bottom:12px;}
-  .login-error{background:#271414; color:var(--danger); padding:10px 12px; border-radius:8px; font-size:13px; margin-bottom:12px;}
+  .login-error{background:#FEE2E2; color:var(--danger); padding:10px 12px; border-radius:8px; font-size:13px; margin-bottom:12px;}
   .msg{padding:10px 14px; border-radius:8px; font-size:13.5px; margin-top:8px;}
-  .msg.ok{background:#132018; color:var(--ok);}
-  .msg.err{background:#271414; color:var(--danger);}
+  .msg.ok{background:#D1FAE5; color:var(--ok);}
+  .msg.err{background:#FEE2E2; color:var(--danger);}
   .toolbar{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; align-items:center;}
-  .modal-backdrop{position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; z-index:100; padding:16px;}
+  .modal-backdrop{position:fixed; inset:0; background:rgba(17,24,39,.45); display:flex; align-items:center; justify-content:center; z-index:100; padding:16px;}
   .modal{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:24px; width:400px; max-width:100%; max-height:90vh; overflow:auto;}
   .modal h3{margin-bottom:14px;}
   .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:12px;}
@@ -118,7 +124,7 @@
   .linha-total:last-child{border-bottom:none;}
   .linha-total.destaque{font-weight:700; font-size:16px; padding-top:11px;}
   .secao-titulo{font-size:12px; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:.04em; margin:22px 0 10px;}
-  .aviso{background:#241C0A; border-left:4px solid var(--warn); border-radius:10px; padding:13px 16px; font-size:13.5px; margin-bottom:16px;}
+  .aviso{background:#FFFBEB; border-left:4px solid var(--warn); border-radius:10px; padding:13px 16px; font-size:13.5px; margin-bottom:16px;}
   @media (max-width:720px){
     .shell{flex-direction:column;}
     .sidebar{width:100%; flex-direction:row; overflow-x:auto; padding:12px;}
@@ -139,10 +145,10 @@
 <script>
 const app = document.getElementById('app');
 
-// tema escuro: Chart.js por padrão desenha texto escuro, ajusta pra ficar legível no fundo escuro
+// cores dos gráficos combinando com o tema claro
 if(typeof Chart !== 'undefined'){
-  Chart.defaults.color = '#9AA2AC';
-  Chart.defaults.borderColor = '#262B33';
+  Chart.defaults.color = '#6B7280';
+  Chart.defaults.borderColor = '#E5E7EB';
 }
 
 const S = {
@@ -363,31 +369,28 @@ function desenhar(){
 }
 
 // ====================== GASTO RÁPIDO =======================
-// atalhos de 1 clique; "cats" são palavras pra achar a categoria certa entre as cadastradas
+// todo gasto rápido cai nessa categoria (criada sozinha na primeira vez)
+const CATEGORIA_RAPIDA='Gasto rápido';
 const ATALHOS_RAPIDOS=[
-  {nome:'Pedágio', i:'road', cats:['transporte','carro','veículo','veiculo','viagem']},
-  {nome:'Gasolina', i:'gas-station', cats:['combustível','combustivel','transporte','carro','veículo','veiculo']},
-  {nome:'Lanche', i:'burger', cats:['alimentação','alimentacao','lanche','comida','restaurante']},
-  {nome:'Estacionamento', i:'parking', cats:['transporte','carro','veículo','veiculo']},
-  {nome:'Mercado', i:'shopping-cart', cats:['mercado','supermercado','alimentação','alimentacao']},
-  {nome:'Uber', i:'car', cats:['transporte','uber']},
+  {nome:'Pedágio', i:'road'},
+  {nome:'Gasolina', i:'gas-station'},
+  {nome:'Lanche', i:'burger'},
+  {nome:'Estacionamento', i:'parking'},
+  {nome:'Mercado', i:'shopping-cart'},
+  {nome:'Uber', i:'car'},
 ];
 function recentesRapidos(){
   try{ return JSON.parse(localStorage.getItem('fin_rapidos')||'[]'); }catch{ return []; }
 }
-function guardarRecente(nome, categoria){
+function guardarRecente(nome){
   try{
-    const lista=[{nome,categoria}, ...recentesRapidos().filter(r=>r.nome.toLowerCase()!==nome.toLowerCase())].slice(0,4);
+    const lista=[{nome}, ...recentesRapidos().filter(r=>r.nome.toLowerCase()!==nome.toLowerCase())].slice(0,4);
     localStorage.setItem('fin_rapidos', JSON.stringify(lista));
   }catch{}
 }
-function categoriaParecida(palavras){
-  const cats=(S.dados.categorias||[]).map(c=>c.nome);
-  for(const p of palavras){
-    const achou=cats.find(c=>c.toLowerCase().includes(p));
-    if(achou) return achou;
-  }
-  return null;
+async function garantirCategoriaRapida(){
+  const existe=(S.dados.categorias||[]).some(c=>c.nome.toLowerCase()===CATEGORIA_RAPIDA.toLowerCase());
+  if(!existe) await api('categoria.salvar',{nome:CATEGORIA_RAPIDA});
 }
 
 function gastoRapido(){
@@ -396,8 +399,8 @@ function gastoRapido(){
   const padroes = ATALHOS_RAPIDOS.map(a=>a.nome.toLowerCase());
   const recentes = recentesRapidos().filter(r=>!padroes.includes(r.nome.toLowerCase()));
   const chips = [
-    ...ATALHOS_RAPIDOS.map(a=>({nome:a.nome, i:a.i, cat:categoriaParecida(a.cats)})),
-    ...recentes.map(r=>({nome:r.nome, i:'history', cat:r.categoria})),
+    ...ATALHOS_RAPIDOS,
+    ...recentes.map(r=>({nome:r.nome, i:'history'})),
   ];
 
   const b = modal('Gasto rápido', `
@@ -406,8 +409,7 @@ function gastoRapido(){
     <input class="login-input valor-rapido" id="rValor" type="number" step="0.01" inputmode="decimal" placeholder="0,00">
     <label class="field-label">O que foi</label>
     <input class="login-input" id="rNome" placeholder="Pastel">
-    <label class="field-label">Categoria</label>
-    <select class="login-input" id="rCat">${opcoesCategoria()}</select>
+    <p class="hint" style="margin:-4px 0 10px;"><i class="ti ti-tag"></i> Vai pra categoria <b>${CATEGORIA_RAPIDA}</b></p>
     <label class="field-label">Data</label>
     <input class="login-input" id="rData" type="date" value="${dataPadrao}">
     <label style="display:flex;align-items:center;gap:8px;font-size:14px;margin:4px 0 8px;">
@@ -417,17 +419,16 @@ function gastoRapido(){
     const nome=b2.querySelector('#rNome').value.trim();
     const valor=b2.querySelector('#rValor').value;
     const data=b2.querySelector('#rData').value;
-    const categoria=b2.querySelector('#rCat').value;
     if(!nome || !Number(valor) || !data) throw new Error('Preencha valor, o que foi e data.');
-    await api('saida.salvar',{nome, categoria, valor, data, parcelas:1, pago:b2.querySelector('#rPago').checked});
-    guardarRecente(nome, categoria);
+    await garantirCategoriaRapida();
+    await api('saida.salvar',{nome, categoria:CATEGORIA_RAPIDA, valor, data, parcelas:1, pago:b2.querySelector('#rPago').checked});
+    guardarRecente(nome);
   }, 'Lançar gasto');
 
   b.querySelectorAll('.atalho').forEach(el=>el.onclick=()=>{
     const c=chips[Number(el.dataset.k)];
     b.querySelectorAll('.atalho').forEach(x=>x.classList.toggle('sel', x===el));
     b.querySelector('#rNome').value=c.nome;
-    if(c.cat) b.querySelector('#rCat').value=c.cat;
     b.querySelector('#rValor').focus();
   });
   b.querySelector('#rValor').onkeydown=e=>{ if(e.key==='Enter') b.querySelector('#mOk').click(); };
@@ -529,10 +530,10 @@ function pgPainel(c){
     <div class="page-header"><div class="eyebrow">Painel</div><h2>${nomeMes(S.mes)}</h2></div>
     ${avisoPlanos}
     ${blocoAgendaHoje}
-    <div class="panel hero">
+    <div class="hero">
       <div>
         <div class="field-label">Saldo de ${nomeMes(S.mes)}</div>
-        <div class="big" style="color:${rMeu.disponivel>=0?'var(--ok)':'var(--danger)'};">${money(rMeu.disponivel)}</div>
+        <div class="big ${rMeu.disponivel<0?'negativo':''}">${money(rMeu.disponivel)}</div>
         <div class="hint" style="margin:2px 0 0;">entrou ${money(rMeu.entradas)} · despesas ${money(rMeu.despesas)}</div>
       </div>
       <div class="prog-wrap">
@@ -1264,7 +1265,7 @@ function pgRelatorios(c){
 
   new Chart(document.getElementById('gCat'),{
     type:'bar',
-    data:{labels:cats.map(x=>x[0]), datasets:[{label:'Gasto', data:cats.map(x=>x[1]), backgroundColor:'#3B82F6'}]},
+    data:{labels:cats.map(x=>x[0]), datasets:[{label:'Gasto', data:cats.map(x=>x[1]), backgroundColor:'#4F46E5'}]},
     options:{plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:v=>money(v)}}}}
   });
 
@@ -1275,8 +1276,8 @@ function pgRelatorios(c){
     new Chart(document.getElementById('gAno'),{
       type:'line',
       data:{labels:meses.map(m=>nomeMes(m).split(' de ')[0]), datasets:[
-        {label:'Entradas', data:ent, borderColor:'#4ADE80', backgroundColor:'#4ADE80', tension:.3},
-        {label:'Saídas', data:sai, borderColor:'#F87171', backgroundColor:'#F87171', tension:.3},
+        {label:'Entradas', data:ent, borderColor:'#059669', backgroundColor:'#059669', tension:.3},
+        {label:'Saídas', data:sai, borderColor:'#DC2626', backgroundColor:'#DC2626', tension:.3},
       ]},
       options:{scales:{y:{ticks:{callback:v=>money(v)}}}}
     });
